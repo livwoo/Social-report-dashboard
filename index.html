@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社群成效月報儀表板</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #1877F2; --primary-rgb: 24,119,242;
+  --primary-light: #E8F0FE; --primary-dark: #1565C0;
+  --bg: #F5F5F7; --surface: #FFFFFF;
+  --text: #1D1D1F; --text-muted: #6E6E73; --border: #E5E5EA;
+  --r: 12px; --r-sm: 8px; --r-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10); --trans: 0.2s ease;
+}
+body.ig-mode  { --primary:#C13584; --primary-rgb:193,53,132; --primary-light:#FCE4F0; --primary-dark:#A0286E; }
+body.all-mode { --primary:#6366F1; --primary-rgb:99,102,241; --primary-light:#EEF2FF; --primary-dark:#4F46E5; }
+body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:14px; line-height:1.5; }
+.page { max-width:1440px; margin:0 auto; padding:28px 32px; }
+
+/* Header */
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:16px; }
+.header-left { display:flex; align-items:center; gap:14px; }
+.brand-pill { width:6px; height:32px; border-radius:99px; background:var(--primary); transition:background var(--trans); }
+.client-name { font-size:20px; font-weight:600; letter-spacing:-0.4px; border:none; background:transparent; outline:none; color:var(--text); width:220px; }
+.client-name::placeholder { color:var(--text-muted); font-weight:400; }
+.period-tag { font-size:12px; font-weight:500; color:var(--primary); background:var(--primary-light); padding:3px 10px; border-radius:99px; transition:all var(--trans); }
+.header-right { display:flex; align-items:center; gap:10px; }
+.platform-toggle { display:flex; background:var(--surface); border:1.5px solid var(--border); border-radius:99px; padding:3px; }
+.pf-btn { padding:6px 18px; border:none; border-radius:99px; font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
+.pf-btn.active { background:var(--primary); color:#fff; box-shadow:0 1px 6px rgba(var(--primary-rgb),0.35); }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--r-sm); font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--surface); color:var(--text); transition:all var(--trans); font-family:inherit; white-space:nowrap; }
+.btn:hover { border-color:var(--primary); color:var(--primary); }
+.btn-primary { background:var(--primary); border-color:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-dark); border-color:var(--primary-dark); color:#fff; }
+
+/* Month Nav */
+.month-nav { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.month-pill {
+  padding:6px 16px; border:1.5px solid var(--border); border-radius:99px;
+  font-size:12px; font-weight:500; cursor:pointer; background:var(--surface);
+  color:var(--text-muted); transition:all var(--trans); font-family:inherit;
+  position:relative;
+}
+.month-pill:hover { border-color:var(--primary); color:var(--primary); }
+.month-pill.active { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 1px 6px rgba(var(--primary-rgb),0.3); }
+.month-pill.has-data:not(.active)::after { content:''; position:absolute; top:4px; right:5px; width:5px; height:5px; border-radius:50%; background:var(--primary); opacity:0.6; }
+.month-pill.sample:not(.active) { border-style:dashed; }
+.month-add { padding:6px 12px; border:1.5px dashed var(--border); border-radius:99px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
+.month-add:hover { border-color:var(--primary); color:var(--primary); }
+
+/* Tabs */
+.tab-nav { display:flex; gap:3px; margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:4px; width:fit-content; }
+.tab-btn { padding:8px 22px; border:none; border-radius:var(--r); font-size:13px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
+.tab-btn.active { background:var(--primary); color:#fff; box-shadow:0 1px 6px rgba(var(--primary-rgb),0.3); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* KPI */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+.kpi-card { background:var(--surface); border-radius:var(--r-lg); padding:20px 22px 18px; border:1px solid var(--border); box-shadow:var(--shadow); }
+.kpi-label { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:10px; }
+.kpi-value { font-size:30px; font-weight:700; color:var(--primary); letter-spacing:-0.8px; line-height:1; margin-bottom:6px; transition:color var(--trans); }
+.kpi-sub { font-size:11px; color:var(--text-muted); }
+
+/* Cards & Charts */
+.charts-2col { display:grid; grid-template-columns:3fr 2fr; gap:14px; margin-bottom:14px; }
+.card { background:var(--surface); border-radius:var(--r-lg); padding:22px 24px; border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:14px; }
+.card:last-child { margin-bottom:0; }
+.card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:18px; letter-spacing:-0.2px; }
+.chart-box { position:relative; }
+.chart-box.h240 { height:240px; }
+.chart-box.h280 { height:280px; }
+.chart-box.h260 { height:260px; }
+
+/* Table */
+.table-card { background:var(--surface); border-radius:var(--r-lg); border:1px solid var(--border); box-shadow:var(--shadow); overflow:hidden; }
+.table-head-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:10px; }
+.table-head-bar .card-title { margin:0; }
+.search-wrap { display:flex; align-items:center; gap:7px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--r-sm); padding:6px 12px; transition:border-color var(--trans); }
+.search-wrap:focus-within { border-color:var(--primary); }
+.search-wrap input { border:none; background:transparent; outline:none; font-size:13px; color:var(--text); width:200px; font-family:inherit; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead { background:var(--bg); }
+th { padding:10px 14px; text-align:left; font-size:10.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; cursor:pointer; user-select:none; border-bottom:1px solid var(--border); }
+th:hover, th.sorted { color:var(--primary); }
+th .si { display:inline-block; margin-left:3px; opacity:0.35; }
+th.sorted .si { opacity:1; }
+td { padding:11px 14px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--primary-light); }
+.post-name { max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+.dt { color:var(--text-muted); font-size:12px; }
+.nr { text-align:right; font-variant-numeric:tabular-nums; }
+.eng-total { font-weight:600; color:var(--primary); }
+
+/* Funnel */
+.funnel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.funnel-header h2 { font-size:16px; font-weight:600; letter-spacing:-0.3px; }
+.funnel-header p { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.funnel-source-tag { font-size:12px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); padding:8px 16px; border-radius:var(--r-sm); }
+.funnel-source-tag strong { color:var(--primary); transition:color var(--trans); }
+.funnel-wrap { display:flex; flex-direction:column; align-items:center; gap:0; }
+.f-step { background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:var(--r-lg); padding:20px 24px; box-shadow:var(--shadow); transition:border-color var(--trans); width:100%; max-width:var(--fw); }
+.f-step-1 { --fw:100%; } .f-step-2 { --fw:83%; } .f-step-3 { --fw:64%; } .f-step-4 { --fw:45%; }
+.f-inner { display:flex; align-items:flex-start; gap:0; }
+.f-tag { display:flex; align-items:flex-start; gap:12px; flex-shrink:0; min-width:150px; padding-right:20px; border-right:1px solid var(--border); }
+.f-num { width:30px; height:30px; border-radius:50%; background:var(--primary); color:#fff; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; transition:background var(--trans); }
+.f-name { font-size:14px; font-weight:600; letter-spacing:-0.2px; line-height:1.3; }
+.f-en { font-size:9.5px; font-weight:600; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+.f-metrics { display:flex; align-items:stretch; flex:1; gap:0; }
+.f-m { flex:1; padding:2px 0 2px 20px; }
+.f-m+.f-m { border-left:1px solid var(--border); padding-left:20px; }
+.f-ml { font-size:10.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:7px; display:flex; align-items:center; gap:6px; }
+.f-badge { font-size:10px; font-weight:500; padding:1px 7px; border-radius:99px; letter-spacing:0; text-transform:none; transition:all var(--trans); }
+.f-badge-auto { color:var(--primary); background:var(--primary-light); }
+.f-badge-manual { color:#92400E; background:#FEF3C7; }
+.f-mv { font-size:26px; font-weight:700; color:var(--primary); letter-spacing:-0.5px; line-height:1; margin-bottom:5px; transition:color var(--trans); }
+.f-ms { font-size:11px; color:var(--text-muted); }
+.f-input-wrap { display:flex; align-items:baseline; gap:6px; margin-bottom:5px; }
+.f-input { width:88px; padding:5px 10px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:22px; font-weight:700; color:var(--primary); font-family:inherit; background:var(--bg); outline:none; transition:border-color var(--trans); letter-spacing:-0.3px; -moz-appearance:textfield; }
+.f-input::-webkit-inner-spin-button,.f-input::-webkit-outer-spin-button { -webkit-appearance:none; }
+.f-input:focus { border-color:var(--primary); background:var(--primary-light); }
+.f-input::placeholder { font-size:14px; font-weight:400; color:var(--text-muted); }
+.f-unit { font-size:12px; color:var(--text-muted); font-weight:500; }
+.f-conclusion { margin-top:14px; padding:10px 14px; background:var(--primary-light); border-radius:var(--r-sm); font-size:12px; color:var(--text); line-height:1.65; transition:background var(--trans); }
+.f-conclusion b { color:var(--primary); transition:color var(--trans); }
+.f-conn { display:flex; flex-direction:column; align-items:center; gap:0; padding:6px 0; width:100%; }
+.f-conn-line { width:2px; height:14px; background:linear-gradient(to bottom,var(--border),rgba(var(--primary-rgb),0.5)); }
+.f-conn-pill { display:flex; align-items:center; gap:0; background:var(--surface); border:1.5px solid var(--border); border-radius:99px; box-shadow:var(--shadow); overflow:hidden; }
+.f-conn-rate { font-size:14px; font-weight:700; color:var(--primary); padding:6px 16px; transition:color var(--trans); border-right:1px solid var(--border); }
+.f-conn-calc { font-size:11px; color:var(--text-muted); padding:6px 14px; font-variant-numeric:tabular-nums; border-right:1px solid var(--border); }
+.f-conn-lbl { font-size:11px; color:var(--text-muted); padding:6px 14px; }
+.funnel-summary { margin-top:28px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow); }
+.funnel-highlight { font-weight:600; color:var(--primary); transition:color var(--trans); }
+.funnel-rate-pill { display:inline-block; background:var(--primary-light); color:var(--primary); border-radius:99px; padding:2px 10px; font-size:12px; font-weight:600; transition:all var(--trans); }
+
+/* Compare Tab */
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.compare-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+.compare-header h2 { font-size:16px; font-weight:600; letter-spacing:-0.3px; }
+.compare-header p { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.mom-badge { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; }
+.mom-up   { color:#059669; background:#ECFDF5; }
+.mom-down { color:#DC2626; background:#FEF2F2; }
+.mom-flat { color:var(--text-muted); background:var(--bg); }
+.empty-state { text-align:center; padding:60px 24px; color:var(--text-muted); }
+.empty-state .empty-icon { font-size:36px; margin-bottom:12px; }
+.empty-state h3 { font-size:15px; font-weight:500; margin-bottom:6px; color:var(--text); }
+.empty-state p { font-size:13px; }
+
+/* Modal */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
+.modal { background:var(--surface); border-radius:var(--r-lg); padding:32px; max-width:500px; width:92%; box-shadow:var(--shadow-md); }
+.modal-title { font-size:18px; font-weight:600; margin-bottom:6px; }
+.modal-desc { font-size:13px; color:var(--text-muted); line-height:1.65; margin-bottom:24px; }
+.drop-zone { border:2px dashed var(--border); border-radius:var(--r); padding:36px 24px; text-align:center; cursor:pointer; transition:all var(--trans); margin-bottom:16px; }
+.drop-zone:hover,.drop-zone.drag { border-color:var(--primary); background:var(--primary-light); }
+.drop-icon { font-size:28px; margin-bottom:10px; }
+.drop-t { font-size:14px; font-weight:500; margin-bottom:4px; }
+.drop-s { font-size:12px; color:var(--text-muted); }
+.modal-label { font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+.csv-paste { width:100%; height:80px; font-size:12px; font-family:'SF Mono',monospace; border:1.5px solid var(--border); border-radius:var(--r-sm); padding:8px 10px; resize:vertical; outline:none; transition:border-color var(--trans); color:var(--text); background:var(--bg); }
+.csv-paste:focus { border-color:var(--primary); }
+.modal-hint { font-size:11px; color:var(--text-muted); margin-top:12px; line-height:1.6; }
+.modal-hint b { color:var(--text); font-weight:500; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+.add-month-modal select, .add-month-modal input { padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:14px; font-family:inherit; outline:none; transition:border-color var(--trans); background:var(--bg); color:var(--text); }
+.add-month-modal select:focus, .add-month-modal input:focus { border-color:var(--primary); }
+
+/* Toast */
+.toast { position:fixed; bottom:28px; right:28px; background:#1D1D1F; color:#fff; padding:11px 18px; border-radius:var(--r-sm); font-size:13px; font-weight:500; box-shadow:var(--shadow-md); transform:translateY(70px); opacity:0; transition:all 0.28s ease; z-index:999; }
+.toast.show { transform:translateY(0); opacity:1; }
+.footer { text-align:center; padding:32px 0 16px; font-size:11px; color:var(--text-muted); }
+
+@media (max-width:1024px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .charts-2col,.compare-grid { grid-template-columns:1fr; } .f-step-2{--fw:92%;} .f-step-3{--fw:80%;} .f-step-4{--fw:65%;} }
+@media (max-width:640px) { .page{padding:16px;} .kpi-grid{grid-template-columns:repeat(2,1fr);} .kpi-value{font-size:24px;} .f-step-1,.f-step-2,.f-step-3,.f-step-4{--fw:100%;} .f-inner{flex-direction:column;gap:14px;} .f-tag{border-right:none;padding-right:0;padding-bottom:14px;border-bottom:1px solid var(--border);} .f-metrics{flex-direction:column;padding-left:0;} .f-m{padding-left:0;} .f-m+.f-m{border-left:none;border-top:1px solid var(--border);padding-top:12px;} .f-conn-calc,.f-conn-lbl{display:none;} }
+@media print { body{background:#fff;} .header-right,.tab-nav,.month-nav,.table-head-bar .search-wrap,.client-switcher{display:none!important;} .card,.kpi-card,.table-card,.f-step,.funnel-summary{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid;} .tab-pane{display:block!important;} .footer{display:none;} }
+
+/* Client Switcher */
+.client-switcher { display:flex; align-items:center; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.client-tab { display:inline-flex; align-items:center; gap:4px; padding:6px 16px; border:1.5px solid var(--border); border-radius:99px; font-size:13px; font-weight:500; cursor:pointer; background:var(--surface); color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
+.client-tab.active { background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 1px 6px rgba(var(--primary-rgb),0.3); }
+.client-tab:hover:not(.active) { border-color:var(--primary); color:var(--primary); }
+.client-tab-del { font-size:10px; opacity:0.65; margin-left:2px; cursor:pointer; line-height:1; padding:1px 3px; border-radius:50%; }
+.client-tab-del:hover { opacity:1; background:rgba(255,255,255,0.3); }
+.client-tab-add { padding:6px 14px; border:1.5px dashed var(--border); border-radius:99px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
+.client-tab-add:hover { border-color:var(--primary); color:var(--primary); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Client Switcher -->
+<div class="client-switcher" id="clientSwitcher"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="brand-pill"></div>
+    <div>
+      <input class="client-name" id="clientName" placeholder="客戶名稱" oninput="saveToStorage();updateClientLabel()" />
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <span class="period-tag" id="periodTag"></span>
+        <span style="font-size:12px;color:var(--text-muted)">社群成效月報</span>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="platform-toggle">
+      <button class="pf-btn active" id="btnFB" onclick="switchPlatform('fb')">Facebook</button>
+      <button class="pf-btn" id="btnIG" onclick="switchPlatform('ig')">Instagram</button>
+      <button class="pf-btn" id="btnAll" onclick="switchPlatform('all')" style="letter-spacing:-0.2px">FB + IG</button>
+    </div>
+    <button class="btn" onclick="openImport()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      匯入 CSV
+    </button>
+    <button class="btn" id="shareBtn" onclick="exportToURL()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      生成分享連結
+    </button>
+    <button class="btn" onclick="window.print()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      列印 / PDF
+    </button>
+  </div>
+</div>
+
+<!-- 客戶檢視 Banner -->
+<div id="readonlyBanner" style="display:none;background:linear-gradient(135deg,rgba(var(--primary-rgb),0.08),rgba(var(--primary-rgb),0.04));border:1px solid rgba(var(--primary-rgb),0.2);border-radius:var(--r-sm);padding:10px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span style="font-size:12px;font-weight:500;color:var(--primary)">客戶檢視模式　·　數據由 <strong id="roClientName"></strong> 提供</span>
+  </div>
+  <span style="font-size:11px;color:var(--text-muted)">整理：樂魚創意行銷工作室 · Liv AD.venture</span>
+</div>
+
+<!-- Month Nav -->
+<div class="month-nav" id="monthNav">
+  <div id="monthPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  <button class="month-add" onclick="openAddMonth()">＋ 新增月份</button>
+</div>
+
+<!-- Tab Nav -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('dash')">貼文成效</button>
+  <button class="tab-btn" onclick="showTab('funnel')">行銷漏斗</button>
+  <button class="tab-btn" onclick="showTab('compare')">跨月比較</button>
+</div>
+
+<!-- ══ TAB: 貼文成效 ══ -->
+<div id="tab-dash" class="tab-pane active">
+  <div id="allModeBanner" style="display:none;background:var(--primary-light);border:1px solid rgba(var(--primary-rgb),0.2);border-radius:var(--r-sm);padding:8px 16px;margin-bottom:14px;font-size:12px;color:var(--primary);font-weight:500;transition:all var(--trans);">
+    ▣ 目前顯示 Facebook + Instagram 合計數據
+  </div>
+  <div id="noDataDash" style="display:none;">
+    <div class="empty-state"><div class="empty-icon">📊</div><h3>尚無數據</h3><p>點擊右上角「匯入 CSV」新增 <span id="noDataMonthLabel"></span> 的貼文數據</p></div>
+  </div>
+  <div id="dashContent">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">總觸及人數</div><div class="kpi-value" id="kpiReach">—</div><div class="kpi-sub" id="kpiReachSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">總曝光次數</div><div class="kpi-value" id="kpiImp">—</div><div class="kpi-sub" id="kpiImpSub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">平均互動率</div><div class="kpi-value" id="kpiER">—</div><div class="kpi-sub">互動總數 ÷ 觸及人數</div></div>
+      <div class="kpi-card"><div class="kpi-label">互動總數</div><div class="kpi-value" id="kpiEng">—</div><div class="kpi-sub" id="kpiEngSub"></div></div>
+      <div class="kpi-card" id="kpiFollowsCard" style="display:none"><div class="kpi-label">追蹤人數</div><div class="kpi-value" id="kpiFollows">—</div><div class="kpi-sub" id="kpiFollowsSub"></div></div>
+    </div>
+    <div class="charts-2col">
+      <div class="card" style="margin-bottom:0"><div class="card-title">觸及 & 曝光趨勢</div><div class="chart-box h240"><canvas id="chartTrend"></canvas></div></div>
+      <div class="card" style="margin-bottom:0"><div class="card-title">互動組成分布</div><div class="chart-box h240"><canvas id="chartDonut"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-title">各貼文互動拆解</div><div class="chart-box h280"><canvas id="chartBars"></canvas></div></div>
+    <div class="table-card">
+      <div class="table-head-bar">
+        <div class="card-title">貼文明細</div>
+        <div class="search-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="searchQ" placeholder="搜尋貼文名稱…" oninput="renderTable()">
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: 行銷漏斗 ══ -->
+<div id="tab-funnel" class="tab-pane">
+  <div class="funnel-header">
+    <div><h2>行銷漏斗分析</h2><p>觸及 → 互動 → 流量 → 轉換　·　帶 ★ 的欄位請手動輸入</p></div>
+    <div class="funnel-source-tag">數據：<strong id="funnelPlatform">Facebook</strong> · <span id="funnelPeriod"></span> · <span id="funnelPostCount"></span> 篇貼文</div>
+  </div>
+  <div class="funnel-wrap">
+    <div class="f-step f-step-1">
+      <div class="f-inner">
+        <div class="f-tag"><div class="f-num">1</div><div><div class="f-name">觸及 · 曝光</div><div class="f-en">Awareness</div></div></div>
+        <div class="f-metrics">
+          <div class="f-m"><div class="f-ml">貼文總觸及數 <span class="f-badge f-badge-auto">↺ 自動</span></div><div class="f-mv" id="f1-reach">—</div><div class="f-ms">主要指標 · 總流量體</div></div>
+          <div class="f-m"><div class="f-ml">貼文總曝光數 <span class="f-badge f-badge-auto">↺ 自動</span></div><div class="f-mv" id="f1-imp">—</div><div class="f-ms">次要指標 · 頻率 <span id="f1-freq" style="font-weight:600">—</span>x</div></div>
+        </div>
+      </div>
+      <div class="f-conclusion" id="f1-note">載入貼文數據後自動顯示</div>
+    </div>
+    <div class="f-conn"><div class="f-conn-line"></div><div class="f-conn-pill"><div class="f-conn-rate" id="cr12">—%</div><div class="f-conn-calc" id="cr12-calc">—/—</div><div class="f-conn-lbl">互動率 = 互動總數 ÷ 觸及數</div></div><div class="f-conn-line" style="background:linear-gradient(to bottom,rgba(var(--primary-rgb),0.5),var(--border))"></div></div>
+    <div class="f-step f-step-2">
+      <div class="f-inner">
+        <div class="f-tag"><div class="f-num">2</div><div><div class="f-name">互動 · 觀看</div><div class="f-en">Engagement</div></div></div>
+        <div class="f-metrics">
+          <div class="f-m"><div class="f-ml">貼文互動總數 <span class="f-badge f-badge-auto">↺ 自動</span></div><div class="f-mv" id="f2-eng">—</div><div class="f-ms">按讚＋留言＋分享＋收藏＋點擊</div></div>
+          <div class="f-m"><div class="f-ml">觀看平均時長 <span class="f-badge f-badge-manual">★ 手動</span></div><div class="f-input-wrap"><input class="f-input" type="number" id="fi-watch" placeholder="—" step="0.1" min="0" oninput="renderFunnel()"><span class="f-unit">秒</span></div><div class="f-ms">次要指標 · Meta 影片洞察</div></div>
+        </div>
+      </div>
+      <div class="f-conclusion" id="f2-note">載入貼文數據後自動顯示</div>
+    </div>
+    <div class="f-conn"><div class="f-conn-line"></div><div class="f-conn-pill"><div class="f-conn-rate" id="cr23">—%</div><div class="f-conn-calc" id="cr23-calc">—/—</div><div class="f-conn-lbl" id="cr23-lbl">點擊率 = 連結點擊 ÷ 互動總數</div></div><div class="f-conn-line" style="background:linear-gradient(to bottom,rgba(var(--primary-rgb),0.5),var(--border))"></div></div>
+    <div class="f-step f-step-3">
+      <div class="f-inner">
+        <div class="f-tag"><div class="f-num">3</div><div><div class="f-name" id="f3-title">流量 · 點擊</div><div class="f-en" id="f3-en">Traffic</div></div></div>
+        <div class="f-metrics">
+          <div class="f-m"><div class="f-ml" id="f3-metric-lbl">連結點擊總數 <span class="f-badge f-badge-auto">↺ 自動</span></div><div class="f-mv" id="f3-click">—</div><div class="f-ms" id="f3-metric-sub">主要指標 · 進入網站次數</div></div>
+          <div class="f-m" id="f3-secondary"><div class="f-ml" id="f3-dwell-lbl">網站平均停留時間 <span class="f-badge f-badge-manual">★ 手動</span></div><div class="f-input-wrap"><input class="f-input" type="number" id="fi-dwell" placeholder="—" step="1" min="0" oninput="renderFunnel()"><span class="f-unit">秒</span></div><div class="f-ms" id="f3-dwell-sub">次要指標 · Google Analytics</div></div>
+        </div>
+      </div>
+      <div class="f-conclusion" id="f3-note">載入貼文數據後自動顯示</div>
+    </div>
+    <div class="f-conn"><div class="f-conn-line"></div><div class="f-conn-pill"><div class="f-conn-rate" id="cr34">—%</div><div class="f-conn-calc" id="cr34-calc">—/—</div><div class="f-conn-lbl">表單轉換率 = 諮詢表單 ÷ 連結點擊</div></div><div class="f-conn-line" style="background:linear-gradient(to bottom,rgba(var(--primary-rgb),0.5),var(--border))"></div></div>
+    <div class="f-step f-step-4">
+      <div class="f-inner">
+        <div class="f-tag"><div class="f-num">4</div><div><div class="f-name">轉換 · 諮詢</div><div class="f-en">Conversion</div></div></div>
+        <div class="f-metrics">
+          <div class="f-m"><div class="f-ml">填寫諮詢表單數 <span class="f-badge f-badge-manual">★ 手動</span></div><div class="f-input-wrap"><input class="f-input" type="number" id="fi-forms" placeholder="—" step="1" min="0" oninput="renderFunnel()"><span class="f-unit">份</span></div><div class="f-ms">主要指標 · 最終目標轉換</div></div>
+        </div>
+      </div>
+      <div class="f-conclusion" id="f4-note">輸入表單數後自動計算</div>
+    </div>
+  </div>
+  <div class="funnel-summary">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--border);"><div class="card-title" style="margin:0">漏斗數據摘要</div></div>
+    <table><thead><tr>
+      <th>層級</th><th>主要指標</th><th class="nr">數值</th>
+      <th class="nr">層間轉換率</th><th class="nr">整體轉換率</th>
+      <th>次要指標</th><th class="nr">數值</th>
+    </tr></thead><tbody id="funnelTableBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ TAB: 跨月比較 ══ -->
+<div id="tab-compare" class="tab-pane">
+  <div class="compare-header">
+    <div><h2>跨月比較</h2><p id="compareSubtitle">比較各月份貼文成效變化</p></div>
+    <div id="compareSourceTag" class="funnel-source-tag" style="font-size:12px"></div>
+  </div>
+  <div id="compareEmpty" style="display:none;">
+    <div class="empty-state"><div class="empty-icon">📅</div><h3>數據不足</h3><p>請至少匯入 2 個月份的數據，才能進行跨月比較</p></div>
+  </div>
+  <div id="compareContent">
+    <div class="compare-grid">
+      <div class="card" style="margin-bottom:0"><div class="card-title">月度觸及 & 曝光</div><div class="chart-box h260"><canvas id="chartCmpReach"></canvas></div></div>
+      <div class="card" style="margin-bottom:0"><div class="card-title">月度互動率趨勢</div><div class="chart-box h260"><canvas id="chartCmpER"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-title">月度互動量比較</div><div class="chart-box h260"><canvas id="chartCmpEng"></canvas></div></div>
+    <div class="table-card" style="margin-bottom:0">
+      <div class="table-head-bar"><div class="card-title" style="margin:0">各月份數據對比</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>月份</th>
+          <th class="nr">貼文數</th>
+          <th class="nr">觸及數</th><th class="nr">月增率</th>
+          <th class="nr">曝光數</th>
+          <th class="nr">互動總數</th>
+          <th class="nr">互動率</th><th class="nr">月增率</th>
+          <th class="nr">連結點擊</th>
+        </tr></thead>
+        <tbody id="compareTableBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">整理：樂魚創意行銷工作室 · Liv AD.venture</div>
+</div>
+
+<!-- Import Modal -->
+<div class="overlay" id="modal" onclick="closeImport(event)">
+  <div class="modal">
+    <div class="modal-title">匯入 CSV 數據</div>
+    <div class="modal-desc" style="margin-bottom:12px">系統自動識別欄位，支援中英文欄位名稱。</div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;"><div class="modal-label">匯入月份</div><select id="importMonthSel" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border-color var(--trans);" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"></select></div>
+      <div style="flex:1;min-width:120px;"><div class="modal-label">平台</div><select id="importPlatformSel" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border-color var(--trans);" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"><option value="fb">Facebook</option><option value="ig">Instagram</option></select></div>
+    </div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileIn').click()">
+      <div class="drop-icon">📂</div>
+      <div class="drop-t">拖曳 CSV 至此，或點擊選擇</div>
+      <div class="drop-s">支援 UTF-8 / Excel 匯出格式（.csv）</div>
+    </div>
+    <input type="file" id="fileIn" accept=".csv" style="display:none" onchange="onFileSelect(event)">
+    <div class="modal-label">或貼上 CSV 內容：</div>
+    <textarea class="csv-paste" id="csvPaste" placeholder="將 CSV 文字貼在這裡…"></textarea>
+    <div class="modal-hint">支援欄位：<b>影片名稱</b>、<b>發布時間</b>、<b>觸及人數</b>、<b>曝光次數</b>、<b>按讚數</b>、<b>留言數</b>、<b>分享數</b>、<b>收藏數</b>、<b>連結點擊次數</b>、<b>其他點擊次數</b></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImport()">取消</button>
+      <button class="btn btn-primary" onclick="importPaste()">確認匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Month Modal -->
+<div class="overlay" id="addMonthModal" onclick="closeAddMonth(event)">
+  <div class="modal add-month-modal" style="max-width:360px">
+    <div class="modal-title">新增月份</div>
+    <div class="modal-desc" style="margin-bottom:16px">選擇要新增的年份和月份：</div>
+    <div style="display:flex;gap:10px;margin-bottom:8px;">
+      <select id="addYear" style="flex:1"></select>
+      <select id="addMonthSel" style="flex:1">
+        <option value="01">1月</option><option value="02">2月</option><option value="03">3月</option>
+        <option value="04">4月</option><option value="05">5月</option><option value="06">6月</option>
+        <option value="07">7月</option><option value="08">8月</option><option value="09">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddMonth()">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddMonth()">新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── SAMPLE DATA (May 2026 only) ── */
+const SAMPLE = {
+  fb:[
+    {name:"品牌故事｜春日限定咖啡系列",date:"2026-05-02 10:00",reach:12450,impressions:18930,likes:342,comments:28,shares:45,saves:67,linkClicks:123,otherClicks:89},
+    {name:"活動預告｜五月快閃優惠倒數",date:"2026-05-05 12:30",reach:8320,impressions:13210,likes:198,comments:42,shares:31,saves:55,linkClicks:287,otherClicks:134},
+    {name:"客戶見證｜真實使用者心得",date:"2026-05-08 09:00",reach:6780,impressions:10450,likes:156,comments:63,shares:22,saves:38,linkClicks:45,otherClicks:78},
+    {name:"新品上市｜正式開賣了！",date:"2026-05-11 14:00",reach:15230,impressions:23810,likes:487,comments:55,shares:78,saves:112,linkClicks:342,otherClicks:201},
+    {name:"品牌日常｜幕後花絮大公開",date:"2026-05-14 11:00",reach:5430,impressions:8120,likes:134,comments:19,shares:12,saves:29,linkClicks:23,otherClicks:45},
+    {name:"母親節特輯｜感謝媽媽的一杯",date:"2026-05-18 10:00",reach:21340,impressions:34500,likes:892,comments:134,shares:201,saves:289,linkClicks:178,otherClicks:267},
+    {name:"教學影片｜職人沖泡手法 3 分鐘",date:"2026-05-21 15:00",reach:9870,impressions:15640,likes:312,comments:87,shares:134,saves:198,linkClicks:89,otherClicks:112},
+    {name:"週末限時｜48H 閃購優惠",date:"2026-05-24 09:00",reach:18920,impressions:28340,likes:423,comments:67,shares:89,saves:145,linkClicks:521,otherClicks:234},
+    {name:"話題投票｜你最愛哪種咖啡？",date:"2026-05-26 12:00",reach:7650,impressions:11230,likes:289,comments:178,shares:45,saves:23,linkClicks:34,otherClicks:89},
+    {name:"月底總結｜五月精彩時刻回顧",date:"2026-05-30 18:00",reach:11230,impressions:17890,likes:345,comments:43,shares:67,saves:89,linkClicks:56,otherClicks:123},
+  ],
+  ig:[
+    {name:"春日咖啡時光｜Reel EP.1",date:"2026-05-01 09:00",reach:22100,impressions:31500,likes:890,comments:67,shares:123,saves:445,linkClicks:0,otherClicks:0,follows:89},
+    {name:"限定新品開箱｜美到不敢喝",date:"2026-05-03 18:00",reach:34500,impressions:52300,likes:1420,comments:134,shares:89,saves:678,linkClicks:0,otherClicks:0,follows:234},
+    {name:"早晨儀式感｜我的咖啡例行公事",date:"2026-05-07 07:30",reach:18700,impressions:26800,likes:743,comments:56,shares:45,saves:892,linkClicks:0,otherClicks:0,follows:67},
+    {name:"職人沖泡教學｜Step by Step",date:"2026-05-10 12:00",reach:28900,impressions:41200,likes:1102,comments:178,shares:234,saves:1230,linkClicks:0,otherClicks:0,follows:312},
+    {name:"品牌故事｜我們為什麼做咖啡",date:"2026-05-13 10:00",reach:15600,impressions:22400,likes:623,comments:89,shares:67,saves:389,linkClicks:0,otherClicks:0,follows:45},
+    {name:"母親節｜獻給媽媽的一杯咖啡",date:"2026-05-17 09:00",reach:45600,impressions:68900,likes:2340,comments:312,shares:445,saves:1890,linkClicks:0,otherClicks:0,follows:567},
+    {name:"穿搭 × 咖啡｜聯名企劃 Reveal",date:"2026-05-20 15:00",reach:31200,impressions:47800,likes:1780,comments:234,shares:312,saves:1120,linkClicks:0,otherClicks:0,follows:189},
+    {name:"限時閃購｜週末優惠碼在這",date:"2026-05-22 09:00",reach:12300,impressions:18900,likes:445,comments:89,shares:67,saves:234,linkClicks:0,otherClicks:0,follows:78},
+    {name:"用戶 UGC｜你們拍的超美的",date:"2026-05-25 14:00",reach:19800,impressions:28700,likes:1120,comments:201,shares:145,saves:567,linkClicks:0,otherClicks:0,follows:134},
+    {name:"五月 Recap｜數字背後的故事",date:"2026-05-29 18:00",reach:24500,impressions:35600,likes:980,comments:145,shares:89,saves:712,linkClicks:0,otherClicks:0,follows:98},
+  ]
+};
+
+/* ── STATE ── */
+let months = ['2026-02','2026-03','2026-04','2026-05']; // default months
+let currentMonth = '2026-05';
+let platform = 'fb';
+let currentTab = 'dash';
+
+// monthStore['YYYY-MM'] = { fb: [] | null, ig: [] | null }
+const monthStore = {};
+months.forEach(m => { monthStore[m] = {fb:null, ig:null}; });
+
+// monthManual['YYYY-MM']['fb'|'ig'|'all'] = { watchTime, dwell, forms }
+const monthManual = {};
+months.forEach(m => { monthManual[m] = { fb:{watchTime:'',dwell:'',forms:''}, ig:{watchTime:'',dwell:'',forms:''}, all:{watchTime:'',dwell:'',forms:''} }; });
+
+let data = [];
+let sortKey = 'date', sortDir = -1;
+let charts = {};
+
+/* ── CLIENT STATE ── */
+const CLIENT_META_KEY = 'woo_dash_clients';
+const CLIENT_DATA_PREFIX = 'woo_dash_v1_c';
+const LEGACY_KEY = 'woo_dash_v1';
+let currentClientId = 0;
+let clientMeta = { clients: [{id:0, label:'客戶 1'}], nextId: 1, currentClientId: 0 };
+function clientStorageKey(id){ return CLIENT_DATA_PREFIX + id; }
+
+/* ── 狀態 ── */
+let readOnly = false;
+
+/* ── URL 分享 ── */
+function exportToURL(){
+  try {
+    const payload = JSON.stringify({
+      months, monthStore, monthManual, currentMonth, platform,
+      clientName: document.getElementById('clientName').value
+    });
+    const compressed = LZString.compressToEncodedURIComponent(payload);
+    const url = window.location.href.split('#')[0] + '#share=' + compressed;
+    if(url.length > 200000){ showToast('數據量過大，建議只保留近 3 個月'); return; }
+    navigator.clipboard.writeText(url).then(()=>showToast('✓ 分享連結已複製！貼給客戶即可查看'))
+      .catch(()=>{ prompt('請手動複製此連結：', url); });
+  } catch(e){ showToast('生成連結失敗：' + e.message); }
+}
+
+function loadFromURL(){
+  const hash = window.location.hash;
+  if(!hash.startsWith('#share=')) return false;
+  try {
+    const compressed = hash.slice(7);
+    const d = JSON.parse(LZString.decompressFromEncodedURIComponent(compressed));
+    if(!d || !d.months) return false;
+    // 還原數據
+    months.length = 0; d.months.forEach(m => months.push(m));
+    Object.keys(monthStore).forEach(k=>delete monthStore[k]);
+    months.forEach(m=>{ monthStore[m]=(d.monthStore&&d.monthStore[m])||{fb:null,ig:null}; });
+    Object.keys(monthManual).forEach(k=>delete monthManual[k]);
+    const emptyM=()=>({watchTime:'',dwell:'',forms:''});
+    months.forEach(m=>{ monthManual[m]=(d.monthManual&&d.monthManual[m])||{fb:emptyM(),ig:emptyM(),all:emptyM()}; });
+    if(d.currentMonth && months.includes(d.currentMonth)) currentMonth=d.currentMonth;
+    if(d.platform){ platform=d.platform; applyPlatformUI(d.platform); }
+    if(d.clientName){
+      document.getElementById('clientName').value = d.clientName;
+      document.getElementById('roClientName').textContent = d.clientName || '樂魚工作室';
+    }
+    // 進入唯讀模式
+    readOnly = true;
+    document.getElementById('readonlyBanner').style.display = 'flex';
+    document.getElementById('shareBtn').style.display = 'none';
+    const importBtn = document.querySelector('.btn[onclick="openImport()"]');
+    if(importBtn) importBtn.style.display = 'none';
+    document.querySelector('.month-add').style.display = 'none';
+    document.getElementById('clientName').readOnly = true;
+    return true;
+  } catch(e){ console.warn('URL 數據解析失敗', e); return false; }
+}
+
+/* ── LOCAL STORAGE 持久化 ── */
+
+function saveToStorage(){
+  try {
+    localStorage.setItem(clientStorageKey(currentClientId), JSON.stringify({
+      months, monthStore, monthManual, currentMonth, platform,
+      clientName: document.getElementById('clientName').value
+    }));
+  } catch(e) { console.warn('儲存失敗', e); }
+}
+
+function loadFromStorage(){
+  try {
+    const raw = localStorage.getItem(clientStorageKey(currentClientId));
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    // 還原 months
+    if(d.months && d.months.length){ months.length=0; d.months.forEach(m=>months.push(m)); }
+    // 還原 monthStore
+    Object.keys(monthStore).forEach(k=>delete monthStore[k]);
+    months.forEach(m=>{ monthStore[m]=(d.monthStore&&d.monthStore[m])||{fb:null,ig:null}; });
+    // 還原 monthManual
+    Object.keys(monthManual).forEach(k=>delete monthManual[k]);
+    const emptyM=()=>({watchTime:'',dwell:'',forms:''});
+    months.forEach(m=>{ monthManual[m]=(d.monthManual&&d.monthManual[m])||{fb:emptyM(),ig:emptyM(),all:emptyM()}; });
+    // 還原 currentMonth / platform
+    if(d.currentMonth && months.includes(d.currentMonth)) currentMonth=d.currentMonth;
+    if(d.platform){ platform=d.platform; applyPlatformUI(platform); }
+    if(d.clientName) document.getElementById('clientName').value=d.clientName;
+    return true;
+  } catch(e){ return false; }
+}
+
+function applyPlatformUI(p){
+  document.getElementById('btnFB').classList.toggle('active',p==='fb');
+  document.getElementById('btnIG').classList.toggle('active',p==='ig');
+  document.getElementById('btnAll').classList.toggle('active',p==='all');
+  document.body.classList.remove('ig-mode','all-mode');
+  if(p==='ig') document.body.classList.add('ig-mode');
+  if(p==='all') document.body.classList.add('all-mode');
+  document.getElementById('funnelPlatform').textContent={fb:'Facebook',ig:'Instagram',all:'Facebook + Instagram 合計'}[p];
+  document.getElementById('allModeBanner').style.display=p==='all'?'block':'none';
+}
+
+/* ── CLIENT MANAGEMENT ── */
+function loadClientMeta(){
+  try {
+    const raw = localStorage.getItem(CLIENT_META_KEY);
+    if(raw){
+      clientMeta = JSON.parse(raw);
+      currentClientId = clientMeta.currentClientId || 0;
+      return;
+    }
+    // First run: migrate legacy data if exists
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if(legacy) localStorage.setItem(clientStorageKey(0), legacy);
+    saveClientMeta();
+  } catch(e){ saveClientMeta(); }
+}
+
+function saveClientMeta(){
+  try {
+    clientMeta.currentClientId = currentClientId;
+    localStorage.setItem(CLIENT_META_KEY, JSON.stringify(clientMeta));
+  } catch(e){}
+}
+
+function renderClientTabs(){
+  const container = document.getElementById('clientSwitcher');
+  if(!container) return;
+  if(readOnly){ container.style.display='none'; return; }
+  const tabs = clientMeta.clients.map(c => {
+    const isActive = c.id === currentClientId;
+    const delBtn = clientMeta.clients.length > 1
+      ? `<span class="client-tab-del" onclick="event.stopPropagation();deleteClient(${c.id})" title="刪除此客戶">✕</span>`
+      : '';
+    return `<button class="client-tab${isActive?' active':''}" onclick="switchClient(${c.id})">${esc(c.label||'客戶 '+(c.id+1))}${delBtn}</button>`;
+  }).join('');
+  container.innerHTML = tabs + `<button class="client-tab-add" onclick="addNewClient()">＋ 新增客戶</button>`;
+}
+
+function _resetClientState(){
+  months.length = 0;
+  ['2026-02','2026-03','2026-04','2026-05'].forEach(m => months.push(m));
+  Object.keys(monthStore).forEach(k => delete monthStore[k]);
+  Object.keys(monthManual).forEach(k => delete monthManual[k]);
+  const emptyM = () => ({watchTime:'',dwell:'',forms:''});
+  months.forEach(m => {
+    monthStore[m] = {fb:null, ig:null};
+    monthManual[m] = { fb:emptyM(), ig:emptyM(), all:emptyM() };
+  });
+  currentMonth = '2026-05';
+  platform = 'fb';
+  document.getElementById('clientName').value = '';
+}
+
+function _refreshUI(){
+  renderClientTabs();
+  applyPlatformUI(platform);
+  renderMonthPills();
+  restoreManualInputs();
+  loadCurrentData();
+  document.getElementById('periodTag').textContent = fmtMonthLong(currentMonth);
+  document.getElementById('funnelPeriod').textContent = fmtMonthLong(currentMonth);
+}
+
+function switchClient(id){
+  if(id === currentClientId) return;
+  saveManualInputs();
+  saveToStorage();
+  currentClientId = id;
+  saveClientMeta();
+  _resetClientState();
+  loadFromStorage();
+  _refreshUI();
+  showToast('✓ 已切換至 ' + (clientMeta.clients.find(c=>c.id===id)?.label||''));
+}
+
+function addNewClient(){
+  const id = clientMeta.nextId++;
+  clientMeta.clients.push({ id, label: '客戶 ' + clientMeta.clients.length });
+  saveManualInputs();
+  saveToStorage();
+  currentClientId = id;
+  saveClientMeta();
+  _resetClientState();
+  _refreshUI();
+  document.getElementById('clientName').focus();
+  showToast('✓ 已新增客戶分頁，請輸入客戶名稱');
+}
+
+function deleteClient(id){
+  if(clientMeta.clients.length <= 1) return;
+  const label = clientMeta.clients.find(c=>c.id===id)?.label || '';
+  if(!confirm(`確定要刪除「${label}」的所有數據嗎？\n此操作不可復原。`)) return;
+  const wasCurrent = (id === currentClientId);
+  localStorage.removeItem(clientStorageKey(id));
+  clientMeta.clients = clientMeta.clients.filter(c=>c.id!==id);
+  if(wasCurrent) currentClientId = clientMeta.clients[0].id;
+  saveClientMeta();
+  if(wasCurrent){
+    _resetClientState();
+    loadFromStorage();
+    _refreshUI();
+  } else {
+    renderClientTabs();
+  }
+  showToast('✓ 已刪除「' + label + '」');
+}
+
+function updateClientLabel(){
+  const name = document.getElementById('clientName').value.trim();
+  const client = clientMeta.clients.find(c=>c.id===currentClientId);
+  if(client){
+    client.label = name || ('客戶 ' + (clientMeta.clients.indexOf(client)+1));
+    saveClientMeta();
+    renderClientTabs();
+  }
+}
+
+/* ── INIT ── */
+(function init(){
+  loadClientMeta(); // load client list before anything else
+  const now = new Date();
+  // Populate year select
+  const ySel = document.getElementById('addYear');
+  for(let y = now.getFullYear()-1; y <= now.getFullYear()+1; y++){
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y+'年';
+    if(y === now.getFullYear()) o.selected = true;
+    ySel.appendChild(o);
+  }
+  document.getElementById('addMonthSel').value = String(now.getMonth()+1).padStart(2,'0');
+  // 優先讀 URL 分享數據，否則讀 localStorage
+  if(!loadFromURL()) loadFromStorage();
+  renderClientTabs();
+  renderMonthPills();
+  restoreManualInputs();
+  loadCurrentData();
+  document.getElementById('periodTag').textContent = fmtMonthLong(currentMonth);
+  document.getElementById('funnelPeriod').textContent = fmtMonthLong(currentMonth);
+  // 唯讀模式：disable 手動輸入
+  if(readOnly){
+    ['fi-watch','fi-dwell','fi-forms'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.disabled=true;
+    });
+  }
+})();
+
+/* ── MONTH PILLS ── */
+function fmtMonthLong(m) {
+  const [y,mo] = m.split('-');
+  return `${y}年${parseInt(mo)}月`;
+}
+function fmtMonthShort(m) {
+  return parseInt(m.split('-')[1])+'月';
+}
+
+function renderMonthPills(){
+  const container = document.getElementById('monthPills');
+  container.innerHTML = months.map(m => {
+    const hasImported = monthStore[m] && (monthStore[m].fb || monthStore[m].ig);
+    const isSample = m === '2026-05';
+    const isActive = m === currentMonth;
+    const cls = ['month-pill', isActive?'active':'', hasImported?'has-data':'', isSample&&!hasImported?'sample':''].filter(Boolean).join(' ');
+    const label = fmtMonthShort(m);
+    return `<button class="${cls}" onclick="switchMonth('${m}')" title="${fmtMonthLong(m)}">${label}</button>`;
+  }).join('');
+}
+
+function switchMonth(m){
+  saveManualInputs();
+  currentMonth = m;
+  renderMonthPills();
+  document.getElementById('periodTag').textContent = fmtMonthLong(m);
+  document.getElementById('funnelPeriod').textContent = fmtMonthLong(m);
+  restoreManualInputs();
+  loadCurrentData();
+}
+
+/* ── ADD MONTH ── */
+function openAddMonth(){ document.getElementById('addMonthModal').classList.add('open'); }
+function closeAddMonth(e){
+  if(!e||e.target===document.getElementById('addMonthModal'))
+    document.getElementById('addMonthModal').classList.remove('open');
+}
+function confirmAddMonth(){
+  const y = document.getElementById('addYear').value;
+  const mo = document.getElementById('addMonthSel').value;
+  const key = `${y}-${mo}`;
+  if(months.includes(key)){ showToast(`${fmtMonthLong(key)} 已存在`); return; }
+  months.push(key);
+  months.sort();
+  monthStore[key] = {fb:null, ig:null};
+  monthManual[key] = { fb:{watchTime:'',dwell:'',forms:''}, ig:{watchTime:'',dwell:'',forms:''}, all:{watchTime:'',dwell:'',forms:''} };
+  closeAddMonth();
+  switchMonth(key);
+  saveToStorage();
+  showToast(`✓ 已新增 ${fmtMonthLong(key)}`);
+}
+
+/* ── TAB SWITCHING ── */
+function showTab(tab){
+  currentTab = tab;
+  ['dash','funnel','compare'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', ['dash','funnel','compare'][i]===tab);
+  });
+  document.getElementById('monthNav').style.display = tab==='compare' ? 'none' : 'flex';
+  if(tab==='compare') renderComparison();
+  if(tab==='funnel') renderFunnel();
+}
+
+/* ── PLATFORM ── */
+function switchPlatform(p){
+  saveManualInputs();
+  platform = p;
+  applyPlatformUI(p);
+  restoreManualInputs();
+  loadCurrentData();
+  saveToStorage();
+  if(currentTab==='compare') renderComparison();
+}
+
+/* ── DATA LOADING ── */
+function getDataForMonth(m, pf){
+  const s = monthStore[m] || {fb:null,ig:null};
+  const sample = m==='2026-05';
+  if(pf==='all'){
+    const fb = s.fb || (sample?SAMPLE.fb:[]);
+    const ig = s.ig || (sample?SAMPLE.ig:[]);
+    return [...fb,...ig];
+  }
+  return s[pf] || (sample?SAMPLE[pf]:[]);
+}
+
+function loadCurrentData(){
+  data = getDataForMonth(currentMonth, platform);
+  const noDataDash = document.getElementById('noDataDash');
+  const dashContent = document.getElementById('dashContent');
+  const isEmpty = data.length === 0;
+  noDataDash.style.display = isEmpty ? 'block' : 'none';
+  dashContent.style.display = isEmpty ? 'none' : 'block';
+  if(!isEmpty){
+    document.getElementById('noDataMonthLabel').textContent = fmtMonthLong(currentMonth);
+    renderAll();
+  }
+}
+
+/* ── MANUAL INPUTS ── */
+function saveManualInputs(){
+  if(!monthManual[currentMonth]) monthManual[currentMonth] = { fb:{watchTime:'',dwell:'',forms:''}, ig:{watchTime:'',dwell:'',forms:''}, all:{watchTime:'',dwell:'',forms:''} };
+  monthManual[currentMonth][platform] = {
+    watchTime: document.getElementById('fi-watch').value,
+    dwell:     document.getElementById('fi-dwell').value,
+    forms:     document.getElementById('fi-forms').value
+  };
+  saveToStorage();
+}
+function restoreManualInputs(){
+  const m = (monthManual[currentMonth]||{})[platform] || {watchTime:'',dwell:'',forms:''};
+  document.getElementById('fi-watch').value = m.watchTime;
+  document.getElementById('fi-dwell').value = m.dwell;
+  document.getElementById('fi-forms').value = m.forms;
+}
+
+/* ── COLORS & FORMAT ── */
+function clr(){ return platform==='fb'?{a:'#1877F2',b:'#4F9AFF',c:'#93C5FD',d:'#BFDBFE'}:platform==='ig'?{a:'#C13584',b:'#E879A0',c:'#833AB4',d:'#F9A8D4'}:{a:'#6366F1',b:'#818CF8',c:'#A5B4FC',d:'#C7D2FE'}; }
+function fmt(n){ if(n>=10000)return(n/10000).toFixed(1)+'萬'; if(n>=1000)return(n/1000).toFixed(1)+'K'; return n.toLocaleString(); }
+function fmtN(n){ return n.toLocaleString(); }
+function sum(k){ return data.reduce((s,r)=>s+(r[k]||0),0); }
+function eng(r){ return (r.likes||0)+(r.comments||0)+(r.shares||0)+(r.saves||0); }
+function funnelEng(r){ return eng(r)+(r.linkClicks||0)+(r.otherClicks||0); }
+function pct(a,b,digits=2){ return b>0?(a/b*100).toFixed(digits)+'%':'—'; }
+function setText(id,html){ const el=document.getElementById(id); if(el) el.innerHTML=html; }
+
+/* ── KPIs ── */
+function renderKPIs(){
+  const reach=sum('reach'),imp=sum('impressions');
+  const likes=sum('likes'),comments=sum('comments'),shares=sum('shares'),saves=sum('saves');
+  const total=likes+comments+shares+saves;
+  const er=reach>0?(total/reach*100):0;
+  const follows=sum('follows');
+  setText('kpiReach',fmt(reach)); setText('kpiReachSub',`共 ${data.length} 篇貼文`);
+  setText('kpiImp',fmt(imp)); setText('kpiImpSub',`頻率 ${reach>0?(imp/reach).toFixed(2):'—'}x`);
+  setText('kpiER',er.toFixed(2)+'%');
+  setText('kpiEng',fmt(total)); setText('kpiEngSub',`讚 ${fmt(likes)} · 留 ${fmt(comments)} · 分 ${fmt(shares)} · 藏 ${fmt(saves)}`);
+  const followsCard=document.getElementById('kpiFollowsCard');
+  if(platform==='ig'){
+    followsCard.style.display='block';
+    setText('kpiFollows',fmt(follows));
+    setText('kpiFollowsSub',`平均每篇 ${data.length>0?Math.round(follows/data.length):0} 人`);
+  } else {
+    followsCard.style.display='none';
+  }
+}
+
+/* ── CHARTS ── */
+function renderTrend(){
+  const sorted=[...data].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const labels=sorted.map(r=>{const d=new Date(r.date);return`${d.getMonth()+1}/${d.getDate()}`;});
+  const c=clr();
+  const ctx=document.getElementById('chartTrend').getContext('2d');
+  const g1=ctx.createLinearGradient(0,0,0,240); g1.addColorStop(0,c.a+'33'); g1.addColorStop(1,c.a+'00');
+  const g2=ctx.createLinearGradient(0,0,0,240); g2.addColorStop(0,c.b+'33'); g2.addColorStop(1,c.b+'00');
+  if(charts.trend) charts.trend.destroy();
+  charts.trend=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'觸及數',data:sorted.map(r=>r.reach),borderColor:c.a,backgroundColor:g1,borderWidth:2,pointRadius:4,pointBackgroundColor:c.a,tension:0.4,fill:true},
+    {label:'曝光數',data:sorted.map(r=>r.impressions),borderColor:c.b,backgroundColor:g2,borderWidth:2,pointRadius:4,pointBackgroundColor:c.b,tension:0.4,fill:true,borderDash:[5,3]}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'top',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10,padding:14}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtN(c.parsed.y)}`}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#6E6E73'}},y:{grid:{color:'#F5F5F5'},ticks:{font:{size:11},color:'#6E6E73',callback:v=>fmt(v)}}}}});
+}
+function renderDonut(){
+  const c=clr(); const vals=[sum('likes'),sum('comments'),sum('shares'),sum('saves')];
+  if(charts.donut) charts.donut.destroy();
+  charts.donut=new Chart(document.getElementById('chartDonut'),{type:'doughnut',data:{labels:['按讚','留言','分享','收藏'],datasets:[{data:vals,backgroundColor:[c.a,c.b,c.c,c.d],borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10,padding:16}},tooltip:{callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return`${ctx.label}: ${fmtN(ctx.parsed)} (${(ctx.parsed/t*100).toFixed(1)}%)`;}}}}}});
+}
+function renderBars(){
+  const sorted=[...data].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const labels=sorted.map(r=>r.name.length>14?r.name.slice(0,14)+'…':r.name);
+  const c=clr();
+  if(charts.bars) charts.bars.destroy();
+  charts.bars=new Chart(document.getElementById('chartBars'),{type:'bar',data:{labels,datasets:[
+    {label:'按讚',data:sorted.map(r=>r.likes),backgroundColor:c.a,borderRadius:3,stack:'s'},
+    {label:'留言',data:sorted.map(r=>r.comments),backgroundColor:c.b,borderRadius:3,stack:'s'},
+    {label:'分享',data:sorted.map(r=>r.shares),backgroundColor:c.c,borderRadius:3,stack:'s'},
+    {label:'收藏',data:sorted.map(r=>r.saves),backgroundColor:c.d,borderRadius:3,stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'top',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10,padding:14}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtN(ctx.parsed.y)}`}}},
+    scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10.5},color:'#6E6E73',maxRotation:30}},y:{stacked:true,grid:{color:'#F5F5F5'},ticks:{font:{size:11},color:'#6E6E73',callback:v=>fmt(v)}}}}});
+}
+
+/* ── TABLE ── */
+function sortBy(k){
+  if(sortKey===k) sortDir*=-1; else{sortKey=k;sortDir=-1;}
+  document.querySelectorAll('th[data-k]').forEach(th=>{
+    const active=th.dataset.k===k; th.classList.toggle('sorted',active);
+    const si=th.querySelector('.si'); if(si) si.textContent=active?(sortDir>0?'↑':'↓'):'↕';
+  });
+  renderTable();
+}
+function renderTable(){
+  const isIG=platform==='ig';
+  // 動態表頭
+  const th=(k,lbl)=>`<th class="nr" data-k="${k}" onclick="sortBy('${k}')">${lbl} <span class="si">${sortKey===k?(sortDir>0?'↑':'↓'):'↕'}</span></th>`;
+  document.getElementById('tableHead').innerHTML=`<tr>
+    <th data-k="name" onclick="sortBy('name')">影片 / 貼文名稱 <span class="si">${sortKey==='name'?(sortDir>0?'↑':'↓'):'↕'}</span></th>
+    <th data-k="date" onclick="sortBy('date')">發布時間 <span class="si">${sortKey==='date'?(sortDir>0?'↑':'↓'):'↕'}</span></th>
+    ${th('reach','觸及數')}${th('impressions','曝光數')}${th('total','互動總數')}
+    ${th('likes','按讚')}${th('comments','留言')}${th('shares','分享')}${th('saves','收藏')}
+    ${isIG?th('follows','追蹤人數'):th('linkClicks','連結點擊')+th('otherClicks','其他點擊')}
+    <th class="nr">互動率</th>
+  </tr>`;
+
+  const q=document.getElementById('searchQ').value.toLowerCase();
+  let rows=data.filter(r=>r.name.toLowerCase().includes(q));
+  rows.sort((a,b)=>{
+    let va=sortKey==='total'?eng(a):sortKey==='name'?a.name:(a[sortKey]??0);
+    let vb=sortKey==='total'?eng(b):sortKey==='name'?b.name:(b[sortKey]??0);
+    if(typeof va==='string') return va.localeCompare(vb)*sortDir;
+    return (va-vb)*sortDir;
+  });
+  const colspan=isIG?11:12;
+  const tbody=document.getElementById('tableBody');
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="${colspan}" style="text-align:center;padding:40px;color:var(--text-muted)">沒有符合的貼文</td></tr>`;return;}
+  tbody.innerHTML=rows.map(r=>{
+    const total=eng(r),er=r.reach>0?(total/r.reach*100).toFixed(2)+'%':'—';
+    const d=new Date(r.date),ds=isNaN(d)?r.date:`${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const extraCols=isIG
+      ?`<td class="nr">${fmtN(r.follows||0)}</td>`
+      :`<td class="nr">${fmtN(r.linkClicks||0)}</td><td class="nr">${fmtN(r.otherClicks||0)}</td>`;
+    return`<tr><td><div class="post-name" title="${esc(r.name)}">${esc(r.name)}</div></td><td class="dt">${ds}</td><td class="nr">${fmtN(r.reach)}</td><td class="nr">${fmtN(r.impressions)}</td><td class="nr eng-total">${fmtN(total)}</td><td class="nr">${fmtN(r.likes)}</td><td class="nr">${fmtN(r.comments)}</td><td class="nr">${fmtN(r.shares)}</td><td class="nr">${fmtN(r.saves||0)}</td>${extraCols}<td class="nr" style="font-size:11px;color:var(--text-muted)">${er}</td></tr>`;
+  }).join('');
+}
+
+/* ── FUNNEL ── */
+function renderFunnel(){
+  const isIG=platform==='ig';
+  const reach=sum('reach'),imp=sum('impressions');
+  // IG 互動不含點擊；FB 含點擊
+  const totalEng=data.reduce((s,r)=>s+(isIG?eng(r):funnelEng(r)),0);
+  // L3：IG 用追蹤人數；FB 用連結點擊
+  const links=isIG?sum('follows'):sum('linkClicks');
+  const watchVal=parseFloat(document.getElementById('fi-watch').value)||0;
+  const dwellVal=parseFloat(document.getElementById('fi-dwell').value)||0;
+  const formsVal=parseInt(document.getElementById('fi-forms').value)||0;
+  const freq=reach>0?(imp/reach):0;
+  const cr12=reach>0?(totalEng/reach*100):0;
+  const cr23=totalEng>0?(links/totalEng*100):0;
+  const cr34=links>0?(formsVal/links*100):0;
+  const crTotal=reach>0?(formsVal/reach*100):0;
+
+  // 更新 L3 動態標籤
+  setText('f3-title',isIG?'流量 · 追蹤':'流量 · 點擊');
+  setText('f3-en',isIG?'Follow':'Traffic');
+  setText('f3-metric-lbl',isIG?'追蹤人數 <span class="f-badge f-badge-auto">↺ 自動</span>':'連結點擊總數 <span class="f-badge f-badge-auto">↺ 自動</span>');
+  setText('f3-metric-sub',isIG?'主要指標 · 新增追蹤數':'主要指標 · 進入網站次數');
+  setText('f3-dwell-lbl',isIG?'廣告投放追蹤成本 <span class="f-badge f-badge-manual">★ 手動</span>':'網站平均停留時間 <span class="f-badge f-badge-manual">★ 手動</span>');
+  setText('f3-dwell-sub',isIG?'次要指標 · CPA 參考值':'次要指標 · Google Analytics');
+  setText('cr23-lbl',isIG?'追蹤率 = 追蹤人數 ÷ 互動總數':'點擊率 = 連結點擊 ÷ 互動總數');
+
+  setText('funnelPostCount',data.length);
+  setText('f1-reach',fmtN(reach)); setText('f1-imp',fmtN(imp)); setText('f1-freq',freq.toFixed(2));
+  setText('f1-note',reach>0?`共 <b>${fmtN(reach)}</b> 人看到貼文，每人平均看到 <b>${freq.toFixed(2)}</b> 次（曝光 ${fmtN(imp)} ÷ 觸及 ${fmtN(reach)}）`:'載入貼文數據後自動顯示');
+  setText('f2-eng',fmtN(totalEng));
+  const wNote=watchVal>0?`，平均觀看 <b>${watchVal}秒</b>`:'';
+  setText('f2-note',totalEng>0?`互動率 <b>${cr12.toFixed(2)}%</b>，共 <b>${fmtN(totalEng)}</b> 次互動${wNote}`:'載入貼文數據後自動顯示');
+  setText('f3-click',fmtN(links));
+  const l3Label=isIG?'追蹤':'連結點擊';
+  const dNote=dwellVal>0?(isIG?`，廣告追蹤成本 <b>${dwellVal}元</b>`:`, 網站平均停留 <b>${dwellVal}秒</b>`):'';
+  setText('f3-note',links>0?`${isIG?'追蹤率':'連結點擊率'} <b>${cr23.toFixed(2)}%</b>，共 <b>${fmtN(links)}</b> ${isIG?'人追蹤':'人次進入網站'}${dNote}`:'載入貼文數據後自動顯示');
+  const fi=document.getElementById('fi-forms').value;
+  setText('f4-note',fi!==''?(links>0?`表單轉換率 <b>${cr34.toFixed(2)}%</b>，最終獲得 <b>${formsVal}</b> 份諮詢（整體 ${crTotal.toFixed(3)}%）`:`請載入包含${l3Label}數的數據`):'輸入表單數後自動計算');
+  setText('cr12',cr12.toFixed(1)+'%'); setText('cr12-calc',`${fmtN(totalEng)} / ${fmtN(reach)}`);
+  setText('cr23',cr23.toFixed(1)+'%'); setText('cr23-calc',`${fmtN(links)} / ${fmtN(totalEng)}`);
+  setText('cr34',links>0?cr34.toFixed(1)+'%':'—%'); setText('cr34-calc',links>0?`${formsVal} / ${fmtN(links)}`:'— / —');
+  const wDisp=watchVal>0?watchVal+'秒':'—', dDisp=dwellVal>0?dwellVal+(isIG?'元':'秒'):'—', fDisp=fi!==''?formsVal+'份':'—';
+  document.getElementById('funnelTableBody').innerHTML=[
+    {l:'第一層　觸及·曝光',k:'貼文總觸及數',v:fmtN(reach),cr:'基準（100%）',ov:'100%',sl:'平均曝光頻率',sv:freq.toFixed(2)+'x',op:1},
+    {l:'第二層　互動·觀看',k:'貼文互動總數',v:fmtN(totalEng),cr:cr12.toFixed(2)+'%',ov:reach>0?(totalEng/reach*100).toFixed(2)+'%':'—',sl:'觀看平均時長',sv:wDisp,op:0.72},
+    {l:`第三層　${isIG?'流量·追蹤':'流量·點擊'}`,k:isIG?'追蹤人數':'連結點擊總數',v:fmtN(links),cr:cr23.toFixed(2)+'%',ov:reach>0?(links/reach*100).toFixed(2)+'%':'—',sl:isIG?'追蹤成本(CPA)':'網站停留時間',sv:dDisp,op:0.48},
+    {l:'第四層　轉換·諮詢',k:'諮詢表單數',v:fDisp,cr:links>0?cr34.toFixed(2)+'%':'—',ov:reach>0?crTotal.toFixed(3)+'%':'—',sl:'—',sv:'—',op:0.26},
+  ].map(r=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--primary);opacity:${r.op};flex-shrink:0;transition:background var(--trans)"></div>${r.l}</div></td>
+    <td style="color:var(--text-muted);font-size:12px">${r.k}</td>
+    <td class="nr funnel-highlight">${r.v}</td>
+    <td class="nr"><span class="funnel-rate-pill">${r.cr}</span></td>
+    <td class="nr" style="color:var(--text-muted)">${r.ov}</td>
+    <td style="color:var(--text-muted);font-size:12px">${r.sl}</td>
+    <td class="nr" style="font-weight:500">${r.sv}</td>
+  </tr>`).join('');
+}
+
+/* ── CROSS-MONTH COMPARISON ── */
+function getMonthKPIs(m){
+  const d = getDataForMonth(m, platform);
+  if(!d.length) return null;
+  const reach=d.reduce((s,r)=>s+(r.reach||0),0);
+  const imp=d.reduce((s,r)=>s+(r.impressions||0),0);
+  const likes=d.reduce((s,r)=>s+(r.likes||0),0);
+  const comments=d.reduce((s,r)=>s+(r.comments||0),0);
+  const shares=d.reduce((s,r)=>s+(r.shares||0),0);
+  const saves=d.reduce((s,r)=>s+(r.saves||0),0);
+  const engTotal=likes+comments+shares+saves;
+  const links=d.reduce((s,r)=>s+(r.linkClicks||0),0);
+  const follows=d.reduce((s,r)=>s+(r.follows||0),0);
+  const er=reach>0?(engTotal/reach*100):0;
+  return {reach,imp,engTotal,links,follows,er,posts:d.length,likes,comments,shares,saves};
+}
+
+function momBadge(curr, prev, field){
+  if(!prev||!curr||prev[field]===0) return '<span class="mom-badge mom-flat">—</span>';
+  const pct=((curr[field]-prev[field])/prev[field]*100);
+  const sign=pct>=0?'+':'';
+  const cls=pct>0?'mom-up':pct<0?'mom-down':'mom-flat';
+  const arrow=pct>0?'↑':pct<0?'↓':'→';
+  return `<span class="mom-badge ${cls}">${arrow}${sign}${pct.toFixed(1)}%</span>`;
+}
+
+function renderComparison(){
+  const kpis = months.map(m=>({month:m, kpi:getMonthKPIs(m)}));
+  const validKpis = kpis.filter(k=>k.kpi!==null);
+  const pfLabel = {fb:'Facebook',ig:'Instagram',all:'FB+IG 合計'};
+  document.getElementById('compareSourceTag').innerHTML = `平台：<strong style="color:var(--primary)">${pfLabel[platform]}</strong>`;
+  document.getElementById('compareSubtitle').textContent = `${months.length} 個月份 · ${validKpis.length} 個月有數據`;
+
+  if(validKpis.length < 2){
+    document.getElementById('compareEmpty').style.display='block';
+    document.getElementById('compareContent').style.display='none';
+    return;
+  }
+  document.getElementById('compareEmpty').style.display='none';
+  document.getElementById('compareContent').style.display='block';
+
+  const labels = kpis.map(k=>fmtMonthShort(k.month));
+  const reachData = kpis.map(k=>k.kpi?.reach??0);
+  const impData   = kpis.map(k=>k.kpi?.imp??0);
+  const erData    = kpis.map(k=>k.kpi?.er??null);
+  const engData   = kpis.map(k=>k.kpi?.engTotal??0);
+  const c = clr();
+
+  // Chart 1: Reach & Impressions
+  if(charts.cmpReach) charts.cmpReach.destroy();
+  charts.cmpReach = new Chart(document.getElementById('chartCmpReach'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'觸及數',data:reachData,backgroundColor:c.a,borderRadius:4},
+      {label:'曝光數',data:impData,backgroundColor:c.b+'99',borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10,padding:14}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtN(ctx.parsed.y)}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:12},color:'#6E6E73'}},y:{grid:{color:'#F5F5F5'},ticks:{font:{size:11},color:'#6E6E73',callback:v=>fmt(v)}}}}});
+
+  // Chart 2: Engagement Rate
+  if(charts.cmpER) charts.cmpER.destroy();
+  const ctx2=document.getElementById('chartCmpER').getContext('2d');
+  const gER=ctx2.createLinearGradient(0,0,0,260); gER.addColorStop(0,c.a+'44'); gER.addColorStop(1,c.a+'00');
+  charts.cmpER = new Chart(ctx2,{type:'line',
+    data:{labels,datasets:[{label:'互動率 %',data:erData,borderColor:c.a,backgroundColor:gER,borderWidth:2.5,pointRadius:5,pointBackgroundColor:c.a,tension:0.4,fill:true,spanGaps:true}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:ctx=>`互動率: ${ctx.parsed.y!==null?ctx.parsed.y.toFixed(2)+'%':'—'}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:12},color:'#6E6E73'}},y:{grid:{color:'#F5F5F5'},ticks:{font:{size:11},color:'#6E6E73',callback:v=>v.toFixed(1)+'%'}}}}});
+
+  // Chart 3: Engagement breakdown
+  if(charts.cmpEng) charts.cmpEng.destroy();
+  charts.cmpEng = new Chart(document.getElementById('chartCmpEng'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'按讚',data:kpis.map(k=>k.kpi?.likes??0),backgroundColor:c.a,borderRadius:3,stack:'s'},
+      {label:'留言',data:kpis.map(k=>k.kpi?.comments??0),backgroundColor:c.b,borderRadius:3,stack:'s'},
+      {label:'分享',data:kpis.map(k=>k.kpi?.shares??0),backgroundColor:c.c,borderRadius:3,stack:'s'},
+      {label:'收藏',data:kpis.map(k=>k.kpi?.saves??0),backgroundColor:c.d,borderRadius:3,stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{font:{size:12,family:'Inter'},boxWidth:10,boxHeight:10,padding:14}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtN(ctx.parsed.y)}`}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:12},color:'#6E6E73'}},y:{stacked:true,grid:{color:'#F5F5F5'},ticks:{font:{size:11},color:'#6E6E73',callback:v=>fmt(v)}}}}});
+
+  // Table
+  document.getElementById('compareTableBody').innerHTML = kpis.map((k,i)=>{
+    const cur=k.kpi, prev=i>0?kpis[i-1].kpi:null;
+    if(!cur) return`<tr><td style="font-weight:500">${fmtMonthLong(k.month)}</td><td colspan="8" style="text-align:center;color:var(--text-muted);font-size:12px">尚無數據</td></tr>`;
+    return`<tr>
+      <td style="font-weight:600">${fmtMonthLong(k.month)}</td>
+      <td class="nr">${cur.posts}</td>
+      <td class="nr funnel-highlight">${fmtN(cur.reach)}</td>
+      <td class="nr">${momBadge(cur,prev,'reach')}</td>
+      <td class="nr">${fmtN(cur.imp)}</td>
+      <td class="nr funnel-highlight">${fmtN(cur.engTotal)}</td>
+      <td class="nr">${cur.er.toFixed(2)}%</td>
+      <td class="nr">${momBadge(cur,prev,'er')}</td>
+      <td class="nr">${fmtN(cur.links)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── RENDER ALL ── */
+function renderAll(){
+  renderKPIs(); renderTrend(); renderDonut(); renderBars(); renderTable();
+  if(currentTab==='funnel') renderFunnel();
+  if(currentTab==='compare') renderComparison();
+}
+
+/* ── CSV IMPORT ── */
+const COL={
+  name:['影片名稱','貼文說明','貼文','標題','名稱','title','name','description','content','影片標題'],
+  date:['發布時間','發佈時間','發布日期','發佈日期','時間','日期','date','published','publish time','post date','建立時間'],
+  reach:['觸及人數','觸及數','觸及','reach','people reached','觸及（人數）'],
+  impressions:['曝光次數','曝光數','曝光','觀看次數','impressions','曝光（次數）'],
+  likes:['按讚人數','按讚數','按讚','喜歡','反應','心情數','likes','reactions','like'],
+  comments:['留言數','留言','comments','comment'],
+  shares:['分享數','分享','shares','share'],
+  saves:['收藏數','收藏','儲存','saves','saved'],
+  linkClicks:['連結點擊次數','連結點擊','連結','點擊次數（連結）','link clicks','link_clicks','連結點擊數','總點擊次數'],
+  otherClicks:['其他點擊次數','其他點擊','點擊次數（其他）','貼文點擊','other clicks','other_clicks','post clicks','其他點擊數'],
+  follows:['追蹤人數','新增追蹤數','新增追蹤','follows','new followers','follower gained','followers gained','追蹤數'],
+};
+function findCol(h,f){ const c=COL[f].map(s=>s.toLowerCase()); return h.findIndex(x=>c.includes(x.trim().toLowerCase())); }
+// 完整 CSV 串流解析，支援多行引號欄位
+function parseCSVRows(raw){
+  const rows=[];let row=[],cell='',inQ=false;
+  for(let i=0;i<raw.length;i++){
+    const ch=raw[i];
+    if(inQ){
+      if(ch==='"'){if(raw[i+1]==='"'){cell+='"';i++;}else inQ=false;}
+      else cell+=ch;
+    }else{
+      if(ch==='"') inQ=true;
+      else if(ch===','){row.push(cell);cell='';}
+      else if(ch==='\n'||ch==='\r'){
+        if(ch==='\r'&&raw[i+1]==='\n') i++;
+        row.push(cell);rows.push(row);row=[];cell='';
+      }else cell+=ch;
+    }
+  }
+  if(row.length){row.push(cell);rows.push(row);}
+  return rows;
+}
+function parseCSV(raw){
+  raw=raw.replace(/^﻿/,'');
+  const allRows=parseCSVRows(raw);
+  // 找到真正的 header 行：第一個包含已知欄位關鍵字的行
+  const allKeywords=new Set(Object.values(COL).flat().map(s=>s.toLowerCase()));
+  let hi=-1;
+  for(let i=0;i<allRows.length;i++){
+    if(allRows[i].some(c=>allKeywords.has(c.trim().toLowerCase()))){ hi=i; break; }
+  }
+  if(hi===-1||allRows.length-hi<2) return [];
+  const headers=allRows[hi].map(h=>h.trim());
+  const idx={}; for(const f of Object.keys(COL)) idx[f]=findCol(headers,f);
+  const get=(cells,i)=>i<0||i>=cells.length?'':cells[i].trim();
+  const toInt=s=>parseInt(s.replace(/,/g,''))||0;
+  const rows=[];
+  for(let i=hi+1;i<allRows.length;i++){
+    const cells=allRows[i];
+    if(cells.every(c=>!c.trim())) continue;
+    const reach=toInt(get(cells,idx.reach)),imp=toInt(get(cells,idx.impressions));
+    if(reach===0&&imp===0) continue; // 略過彙總行或空行
+    rows.push({name:get(cells,idx.name)||`貼文 ${i-hi}`,date:get(cells,idx.date),reach,impressions:imp,likes:toInt(get(cells,idx.likes)),comments:toInt(get(cells,idx.comments)),shares:toInt(get(cells,idx.shares)),saves:toInt(get(cells,idx.saves)),linkClicks:toInt(get(cells,idx.linkClicks)),otherClicks:toInt(get(cells,idx.otherClicks)),follows:toInt(get(cells,idx.follows))});
+  }
+  return rows;
+}
+function openImport(){
+  // 填入月份選項
+  const mSel=document.getElementById('importMonthSel');
+  mSel.innerHTML=months.map(m=>`<option value="${m}"${m===currentMonth?' selected':''}>${fmtMonthLong(m)}</option>`).join('');
+  // 填入平台選項（若目前是 all mode 預設 fb）
+  document.getElementById('importPlatformSel').value = platform==='all'?'fb':platform;
+  document.getElementById('modal').classList.add('open');
+}
+function closeImport(e){ if(!e||e.target===document.getElementById('modal')){ document.getElementById('modal').classList.remove('open'); document.getElementById('csvPaste').value=''; } }
+function onFileSelect(e){ const f=e.target.files[0];if(!f)return; const r=new FileReader(); r.onload=ev=>applyCSV(ev.target.result); r.readAsText(f,'UTF-8'); e.target.value=''; }
+function importPaste(){ const t=document.getElementById('csvPaste').value.trim(); if(!t){showToast('請貼上 CSV 內容');return;} applyCSV(t); }
+function applyCSV(raw){
+  const rows=parseCSV(raw);
+  if(!rows.length){ showToast('無法解析，請確認欄位格式'); return; }
+  const targetMonth=document.getElementById('importMonthSel').value||currentMonth;
+  const targetPlatform=document.getElementById('importPlatformSel').value||platform;
+  if(!monthStore[targetMonth]) monthStore[targetMonth]={fb:null,ig:null};
+  monthStore[targetMonth][targetPlatform]=rows;
+  // 切換到匯入的月份和平台
+  saveManualInputs();
+  currentMonth=targetMonth;
+  if(targetPlatform!==platform){
+    platform=targetPlatform;
+    document.getElementById('btnFB').classList.toggle('active',platform==='fb');
+    document.getElementById('btnIG').classList.toggle('active',platform==='ig');
+    document.getElementById('btnAll').classList.toggle('active',false);
+    document.body.classList.remove('ig-mode','all-mode');
+    if(platform==='ig') document.body.classList.add('ig-mode');
+    document.getElementById('funnelPlatform').textContent={fb:'Facebook',ig:'Instagram',all:'Facebook + Instagram 合計'}[platform];
+    document.getElementById('allModeBanner').style.display='none';
+  }
+  restoreManualInputs();
+  renderMonthPills();
+  document.getElementById('periodTag').textContent=fmtMonthLong(currentMonth);
+  document.getElementById('funnelPeriod').textContent=fmtMonthLong(currentMonth);
+  data=[...rows];
+  loadCurrentData();
+  saveToStorage();
+  closeImport();
+  showToast(`✓ 已匯入 ${rows.length} 筆 ${fmtMonthLong(targetMonth)} ${targetPlatform.toUpperCase()} 數據`);
+}
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>applyCSV(ev.target.result);r.readAsText(f,'UTF-8');});
+
+/* ── TOAST & UTILS ── */
+let _tt;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),3000); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
