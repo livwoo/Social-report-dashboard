@@ -182,7 +182,41 @@ tr:hover td { background:var(--primary-light); }
 
 @media (max-width:1024px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .charts-2col,.compare-grid { grid-template-columns:1fr; } .f-step-2{--fw:92%;} .f-step-3{--fw:80%;} .f-step-4{--fw:65%;} }
 @media (max-width:640px) { .page{padding:16px;} .kpi-grid{grid-template-columns:repeat(2,1fr);} .kpi-value{font-size:24px;} .f-step-1,.f-step-2,.f-step-3,.f-step-4{--fw:100%;} .f-inner{flex-direction:column;gap:14px;} .f-tag{border-right:none;padding-right:0;padding-bottom:14px;border-bottom:1px solid var(--border);} .f-metrics{flex-direction:column;padding-left:0;} .f-m{padding-left:0;} .f-m+.f-m{border-left:none;border-top:1px solid var(--border);padding-top:12px;} .f-conn-calc,.f-conn-lbl{display:none;} }
-@media print { body{background:#fff;} .header-right,.tab-nav,.month-nav,.table-head-bar .search-wrap,.client-switcher{display:none!important;} .card,.kpi-card,.table-card,.f-step,.funnel-summary{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid;} .tab-pane{display:block!important;} .footer{display:none;} }
+@media print { body{background:#fff;} .header-right,.tab-nav,.month-nav,.table-head-bar .search-wrap,.client-switcher{display:none!important;} .card,.kpi-card,.table-card,.f-step,.funnel-summary{box-shadow:none;border:1px solid #ddd;page-break-inside:avoid;} .tab-pane{display:block!important;} .footer{display:none;} .email-bar{display:none!important;} }
+
+/* Email Capture Bar */
+.email-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--surface); border-top:1px solid var(--border);
+  box-shadow:0 -4px 24px rgba(0,0,0,0.10);
+  padding:16px 32px;
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  z-index:200;
+  transform:translateY(100%);
+  transition:transform 0.42s cubic-bezier(0.34,1.56,0.64,1);
+  flex-wrap:wrap;
+}
+.email-bar.show { transform:translateY(0); }
+.email-bar-accent { width:4px; height:36px; border-radius:99px; background:var(--primary); flex-shrink:0; transition:background var(--trans); }
+.email-bar-text { display:flex; flex-direction:column; gap:2px; }
+.email-bar-title { font-size:14px; font-weight:600; color:var(--text); letter-spacing:-0.2px; }
+.email-bar-sub { font-size:12px; color:var(--text-muted); }
+.email-bar-form { display:flex; align-items:center; gap:8px; }
+.email-bar-input {
+  padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--r-sm);
+  font-size:13px; font-family:inherit; outline:none; width:240px;
+  background:var(--bg); color:var(--text); transition:border-color var(--trans);
+}
+.email-bar-input:focus { border-color:var(--primary); background:var(--primary-light); }
+.email-bar-input::placeholder { color:var(--text-muted); }
+.email-bar-success { font-size:13px; font-weight:500; color:#059669; display:flex; align-items:center; gap:8px; }
+.email-bar-close {
+  position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer; color:var(--text-muted);
+  font-size:15px; padding:4px 8px; border-radius:var(--r-sm); line-height:1;
+  transition:color var(--trans); font-family:inherit;
+}
+.email-bar-close:hover { color:var(--text); }
 
 /* Client Switcher */
 .client-switcher { display:flex; align-items:center; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
@@ -193,6 +227,49 @@ tr:hover td { background:var(--primary-light); }
 .client-tab-del:hover { opacity:1; background:rgba(255,255,255,0.3); }
 .client-tab-add { padding:6px 14px; border:1.5px dashed var(--border); border-radius:99px; font-size:12px; font-weight:500; cursor:pointer; background:transparent; color:var(--text-muted); transition:all var(--trans); font-family:inherit; }
 .client-tab-add:hover { border-color:var(--primary); color:var(--primary); }
+
+/* Insights */
+.insight-hdr { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.insight-hdr-title { font-size:13px; font-weight:600; color:var(--text); letter-spacing:-0.2px; }
+.insight-tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:99px; text-transform:uppercase; letter-spacing:0.4px; }
+.insight-tag-free { color:#059669; background:#ECFDF5; }
+.insight-tag-ai { color:var(--primary); background:var(--primary-light); transition:all var(--trans); }
+.insight-explain-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.insight-explain-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-sm); padding:14px 16px; }
+.ie-label { font-size:10.5px; font-weight:600; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; transition:color var(--trans); }
+.ie-text { font-size:12px; color:var(--text-muted); line-height:1.65; }
+.insight-item { display:flex; gap:12px; padding:13px 16px; background:var(--bg); border:1px solid var(--border); border-left:3px solid transparent; border-radius:var(--r-sm); margin-bottom:8px; }
+.insight-item-positive { border-left-color:#059669; }
+.insight-item-warning { border-left-color:#D97706; }
+.insight-item-info { border-left-color:var(--primary); transition:border-color var(--trans); }
+.insight-item-star { border-left-color:#7C3AED; }
+.insight-icon { font-size:15px; flex-shrink:0; margin-top:1px; line-height:1.5; }
+.insight-body { font-size:13px; color:var(--text); line-height:1.7; }
+.insight-body b { color:var(--primary); font-weight:600; transition:color var(--trans); }
+.insight-locked-wrap { pointer-events:none; }
+.insight-locked { filter:blur(4px); opacity:0.5; user-select:none; }
+.insight-gate-card { background:var(--primary-light); border:1.5px dashed rgba(var(--primary-rgb),0.35); border-radius:var(--r-lg); padding:22px 24px; margin-top:12px; text-align:center; transition:all var(--trans); }
+.insight-gate-icon { font-size:22px; margin-bottom:8px; }
+.insight-gate-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:4px; }
+.insight-gate-sub { font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.6; }
+.insight-gate-form { display:flex; align-items:center; gap:8px; justify-content:center; flex-wrap:wrap; }
+.insight-gate-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:13px; font-family:inherit; outline:none; width:220px; background:var(--surface); color:var(--text); transition:border-color var(--trans); }
+.insight-gate-input:focus { border-color:var(--primary); }
+.cta-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border-radius:var(--r-lg); padding:20px 24px; margin-top:14px; flex-wrap:wrap; transition:background var(--trans); }
+.cta-bar-title { font-size:14px; font-weight:600; color:#fff; margin-bottom:3px; }
+.cta-bar-sub { font-size:12px; color:rgba(255,255,255,0.8); }
+.btn-cta { background:#fff; border-color:#fff; color:var(--primary); font-weight:600; flex-shrink:0; transition:all var(--trans) !important; }
+.btn-cta:hover { background:rgba(255,255,255,0.9); color:var(--primary-dark); border-color:rgba(255,255,255,0.9); }
+.bench-table { width:100%; border-collapse:collapse; font-size:13px; }
+.bench-table th { padding:10px 14px; text-align:left; font-size:10.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); background:var(--bg); }
+.bench-table td { padding:12px 14px; border-bottom:1px solid var(--border); }
+.bench-table tr:last-child td { border-bottom:none; }
+.bench-badge { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:3px 10px; border-radius:99px; white-space:nowrap; }
+.bench-good { color:#059669; background:#ECFDF5; }
+.bench-warn { color:#D97706; background:#FEF3C7; }
+.bench-bad  { color:#DC2626; background:#FEF2F2; }
+.bench-na   { color:var(--text-muted); background:var(--bg); }
+@media (max-width:640px) { .insight-explain-grid { grid-template-columns:1fr; } .insight-gate-form { flex-direction:column; align-items:stretch; } .insight-gate-input { width:100%; } .cta-bar { flex-direction:column; align-items:flex-start; } }
 </style>
 </head>
 <body>
@@ -290,6 +367,7 @@ tr:hover td { background:var(--primary-light); }
         <tbody id="tableBody"></tbody>
       </table></div>
     </div>
+    <div id="dashInsights"></div>
   </div>
 </div>
 
@@ -351,6 +429,7 @@ tr:hover td { background:var(--primary-light); }
       <th>次要指標</th><th class="nr">數值</th>
     </tr></thead><tbody id="funnelTableBody"></tbody></table>
   </div>
+  <div id="funnelInsights"></div>
 </div>
 
 <!-- ══ TAB: 跨月比較 ══ -->
@@ -437,6 +516,24 @@ tr:hover td { background:var(--primary-light); }
 
 <div class="toast" id="toast"></div>
 
+<!-- Email Capture Bar -->
+<div class="email-bar" id="emailBar">
+  <div class="email-bar-accent"></div>
+  <div class="email-bar-text">
+    <div class="email-bar-title">每月收到社群數據解讀 + 行銷趨勢洞察</div>
+    <div class="email-bar-sub">加入樂魚電子報，免費掌握品牌成長策略</div>
+  </div>
+  <form class="email-bar-form" id="emailBarForm" onsubmit="submitEmailBar(event)">
+    <input class="email-bar-input" type="email" id="emailBarInput" placeholder="輸入你的 Email" required autocomplete="email">
+    <button class="btn btn-primary" type="submit" id="emailBarBtn">免費訂閱</button>
+  </form>
+  <div class="email-bar-success" id="emailBarSuccess" style="display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    已收到！感謝訂閱，稍後會寄確認信給你
+  </div>
+  <button class="email-bar-close" onclick="dismissEmailBar()" title="關閉">✕</button>
+</div>
+
 <script>
 /* ── SAMPLE DATA (May 2026 only) ── */
 const SAMPLE = {
@@ -488,6 +585,8 @@ let charts = {};
 const CLIENT_META_KEY = 'woo_dash_clients';
 const CLIENT_DATA_PREFIX = 'woo_dash_v1_c';
 const LEGACY_KEY = 'woo_dash_v1';
+const CONSULT_URL = 'https://www.digistudio.com.tw'; // 替換成你的諮詢預約連結（Calendly / 官網聯絡頁均可）
+const INSIGHTS_UNLOCK_KEY = 'woo_insights_unlocked';
 let currentClientId = 0;
 let clientMeta = { clients: [{id:0, label:'客戶 1'}], nextId: 1, currentClientId: 0 };
 function clientStorageKey(id){ return CLIENT_DATA_PREFIX + id; }
@@ -1017,6 +1116,7 @@ function renderFunnel(){
     <td style="color:var(--text-muted);font-size:12px">${r.sl}</td>
     <td class="nr" style="font-weight:500">${r.sv}</td>
   </tr>`).join('');
+  renderFunnelInsights();
 }
 
 /* ── CROSS-MONTH COMPARISON ── */
@@ -1121,7 +1221,7 @@ function renderComparison(){
 
 /* ── RENDER ALL ── */
 function renderAll(){
-  renderKPIs(); renderTrend(); renderDonut(); renderBars(); renderTable();
+  renderKPIs(); renderTrend(); renderDonut(); renderBars(); renderTable(); renderDashInsights();
   if(currentTab==='funnel') renderFunnel();
   if(currentTab==='compare') renderComparison();
 }
@@ -1236,6 +1336,246 @@ let _tt;
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),3000); }
 function pad(n){ return String(n).padStart(2,'0'); }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── INSIGHTS ── */
+function isInsightsUnlocked(){ return localStorage.getItem(INSIGHTS_UNLOCK_KEY)==='true'; }
+
+async function submitInsightEmail(e){
+  e.preventDefault();
+  const form=e.target,input=form.querySelector('input[type="email"]'),btn=form.querySelector('button[type="submit"]');
+  const email=input?input.value.trim():'';
+  if(!email||!email.includes('@')){ showToast('請輸入有效的 Email'); return; }
+  if(btn){ btn.disabled=true; btn.textContent='處理中…'; }
+  try {
+    await fetch(EMAIL_FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({email,source:'insight_unlock',month:currentMonth,platform})});
+  } catch(err){}
+  localStorage.setItem(INSIGHTS_UNLOCK_KEY,'true');
+  showToast('✓ 解鎖成功！完整建議已顯示');
+  renderDashInsights(); renderFunnelInsights();
+}
+
+function _insightItemHtml(it,locked){
+  return`<div class="insight-item insight-item-${it.type}${locked?' insight-locked':''}"><div class="insight-icon">${it.icon}</div><div class="insight-body">${it.text}</div></div>`;
+}
+function _insightGateHtml(count){
+  return`<div class="insight-gate-card"><div class="insight-gate-icon">🔍</div><div class="insight-gate-title">還有 ${count} 條個人化優化建議</div><div class="insight-gate-sub">輸入 Email 立即免費解鎖，同步訂閱社群行銷每月精華</div><form class="insight-gate-form" onsubmit="submitInsightEmail(event)"><input class="insight-gate-input" type="email" placeholder="your@email.com" required><button type="submit" class="btn btn-primary">免費解鎖</button></form></div>`;
+}
+function _ctaBarHtml(title){
+  return`<div class="cta-bar"><div><div class="cta-bar-title">${title}</div><div class="cta-bar-sub">預約 Liv 的免費 30 分鐘社群策略諮詢，一起找出成長機會</div></div><a href="${CONSULT_URL}" target="_blank" rel="noopener" class="btn btn-cta">預約免費諮詢 →</a></div>`;
+}
+
+function generateDashInsights(){
+  if(!data.length) return [];
+  const reach=sum('reach'),imp=sum('impressions');
+  const likes=sum('likes'),comments=sum('comments'),shares=sum('shares'),saves=sum('saves');
+  const totalEng=likes+comments+shares+saves;
+  const er=reach>0?(totalEng/reach*100):0;
+  const freq=reach>0?imp/reach:0;
+  const isIG=platform==='ig';
+  const bench=isIG?1.5:0.5;
+  const pf=isIG?'Instagram':'Facebook';
+  const items=[];
+
+  if(er>=bench*1.5){
+    items.push({type:'positive',icon:'📈',text:`本月互動率 <b>${er.toFixed(2)}%</b>，為 ${pf} 行業均值（${bench}%）的 <b>${(er/bench).toFixed(1)} 倍</b>，表現優異。建議分析高互動貼文的共同元素（主題、格式、發文時間），複製成功內容策略。`});
+  } else if(er>=bench){
+    items.push({type:'positive',icon:'✅',text:`本月互動率 <b>${er.toFixed(2)}%</b>，高於 ${pf} 行業均值（${bench}%）。目前內容方向正確，可嘗試增加發文頻率或系列內容強化受眾黏著度。`});
+  } else {
+    items.push({type:'warning',icon:'⚠️',text:`本月互動率 <b>${er.toFixed(2)}%</b>，低於 ${pf} 行業均值（${bench}%）。建議：在貼文結尾加入開放式 CTA（如「你怎麼看？留言告訴我」），或測試 ${isIG?'Reels / 輪播':'影片 / 輪播'} 格式提升觸及。`});
+  }
+
+  if(freq>3){
+    items.push({type:'warning',icon:'🔁',text:`曝光頻率 <b>${freq.toFixed(2)}x</b>，同一用戶平均看到你的貼文 ${freq.toFixed(2)} 次，重複性偏高。建議引入新受眾策略（跨平台推廣、擴散型 Hashtag），避免觸及圈固化。`});
+  } else if(freq>=1.5){
+    items.push({type:'info',icon:'📡',text:`曝光頻率 <b>${freq.toFixed(2)}x</b>，觸及與曝光比例健康。持續目前的發文節奏，可適時加入限時動態強化互動深度。`});
+  } else {
+    items.push({type:'info',icon:'📡',text:`曝光頻率 <b>${freq.toFixed(2)}x</b>，重複曝光偏低。可透過限時動態或加強互動，提升老受眾的重複接觸率。`});
+  }
+
+  if(data.length>=2){
+    const top=[...data].sort((a,b)=>eng(b)-eng(a))[0];
+    const topEr=top.reach>0?(eng(top)/top.reach*100).toFixed(2):'—';
+    const nm=top.name.length>18?top.name.slice(0,18)+'…':top.name;
+    items.push({type:'star',icon:'⭐',text:`本月最高互動貼文「<b>${esc(nm)}</b>」互動率 ${topEr}%，互動 ${fmtN(eng(top))} 次。建議製作同類型系列內容，延伸此主題以維持受眾期待。`});
+  }
+
+  if(likes>0){
+    const cr=comments/likes*100;
+    if(cr>8){
+      items.push({type:'positive',icon:'💬',text:`留言 / 按讚比 <b>${cr.toFixed(1)}%</b>，貼文引發深度討論，演算法加權顯著。建議在發文後 1 小時內積極回覆留言，提升帖子在動態中的曝光排名。`});
+    } else {
+      items.push({type:'info',icon:'💬',text:`留言 / 按讚比 <b>${cr.toFixed(1)}%</b>，留言互動有提升空間。留言對演算法的驅動力高於按讚，建議在貼文末尾加入一個開放式問題引導討論。`});
+    }
+  }
+
+  return items;
+}
+
+function renderDashInsights(){
+  const el=document.getElementById('dashInsights');
+  if(!el) return;
+  if(!data.length){ el.innerHTML=''; return; }
+  const items=generateDashInsights();
+  const unlocked=isInsightsUnlocked();
+  const FREE_COUNT=1;
+  const freeItems=items.slice(0,FREE_COUNT);
+  const lockedItems=items.slice(FREE_COUNT);
+
+  const explainHtml=[
+    {label:'觸及人數',text:'看到你貼文的不重複用戶數，反映內容自然擴散力。Facebook 帳號均值約粉絲數的 1–5%，Instagram 通常更高。'},
+    {label:'互動率 (ER)',text:'互動總數 ÷ 觸及人數 × 100%。行業均值：Facebook ~0.5%、Instagram ~1.5%。高於均值代表內容與受眾高度共鳴。'},
+    {label:'曝光頻率',text:'曝光次數 ÷ 觸及人數，即同一人平均看到你貼文幾次。健康值 1.5–2.5x；過高代表觸及圈固定，需引入新受眾。'},
+  ].map(c=>`<div class="insight-explain-card"><div class="ie-label">${c.label}</div><div class="ie-text">${c.text}</div></div>`).join('');
+
+  const freeHtml=freeItems.map(it=>_insightItemHtml(it,false)).join('');
+  let lockedHtml='';
+  if(lockedItems.length){
+    if(unlocked){
+      lockedHtml=lockedItems.map(it=>_insightItemHtml(it,false)).join('');
+    } else {
+      lockedHtml=`<div class="insight-locked-wrap">${lockedItems.map(it=>_insightItemHtml(it,true)).join('')}</div>${_insightGateHtml(lockedItems.length)}`;
+    }
+  }
+
+  el.innerHTML=`
+<div class="card" style="margin-top:14px;margin-bottom:14px;">
+  <div class="insight-hdr"><div class="insight-hdr-title">數據說明</div><span class="insight-tag insight-tag-free">永遠免費</span></div>
+  <div class="insight-explain-grid">${explainHtml}</div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <div class="insight-hdr"><div class="insight-hdr-title">本月洞察與優化建議</div><span class="insight-tag insight-tag-ai">自動分析</span></div>
+  ${freeHtml}${lockedHtml}
+</div>
+${_ctaBarHtml('想深入解讀這份數據，規劃下月策略？')}`;
+}
+
+function generateFunnelInsights(){
+  const isIG=platform==='ig';
+  const reach=sum('reach');
+  const totalEng=isIG?data.reduce((s,r)=>s+eng(r),0):data.reduce((s,r)=>s+funnelEng(r),0);
+  const links=isIG?sum('follows'):sum('linkClicks');
+  const formsVal=parseInt(document.getElementById('fi-forms')?.value)||0;
+  const cr12=reach>0?(totalEng/reach*100):0;
+  const cr23=totalEng>0?(links/totalEng*100):0;
+  const cr34=links>0?(formsVal/links*100):0;
+
+  function benchStatus(v,lo,hi){ if(v<=0) return 'na'; if(v>=hi) return 'good'; if(v>=lo) return 'warn'; return 'bad'; }
+  function badgeHtml(s){ const m={good:['bench-good','良好 ✓'],warn:['bench-warn','待提升 ⚠'],bad:['bench-bad','偏低 ✗'],na:['bench-na','—']}; const[c,t]=m[s]||m.na; return`<span class="bench-badge ${c}">${t}</span>`; }
+
+  const rows=[
+    {layer:'觸及 → 互動',rate:reach>0?cr12.toFixed(2)+'%':'—',bench:'1–3 %',status:reach>0?benchStatus(cr12,1,3):'na'},
+    {layer:isIG?'互動 → 追蹤':'互動 → 連結點擊',rate:totalEng>0?cr23.toFixed(2)+'%':'—',bench:'5–15 %',status:totalEng>0?benchStatus(cr23,5,15):'na'},
+    {layer:'連結點擊 → 轉換',rate:links>0&&formsVal>0?cr34.toFixed(2)+'%':'—',bench:'1–3 %',status:links>0&&formsVal>0?benchStatus(cr34,1,3):'na'},
+  ];
+  const tableHtml=rows.map(r=>`<tr><td style="font-weight:500">${r.layer}</td><td class="nr" style="font-weight:700;color:var(--primary);transition:color var(--trans)">${r.rate}</td><td class="nr" style="color:var(--text-muted)">${r.bench}</td><td class="nr">${badgeHtml(r.status)}</td></tr>`).join('');
+
+  const insights=[];
+  const order={bad:0,warn:1,good:2};
+  const measured=rows.filter(r=>r.status!=='na');
+  if(measured.length){
+    const worst=[...measured].sort((a,b)=>(order[a.status]||0)-(order[b.status]||0))[0];
+    if(worst.status==='bad'){
+      insights.push({type:'warning',icon:'🚨',text:`目前最薄弱的漏斗環節是「<b>${worst.layer}</b>」（轉換率 ${worst.rate}，行業基準 ${worst.bench}）。優先集中資源優化此層，可帶來整體轉換率的最大提升。`});
+    } else if(worst.status==='warn'){
+      insights.push({type:'info',icon:'💡',text:`「<b>${worst.layer}</b>」轉換率 ${worst.rate} 仍有提升空間（行業基準 ${worst.bench}）。針對此環節做小幅優化，即可有效改善整體漏斗效率。`});
+    } else {
+      insights.push({type:'positive',icon:'🎉',text:`三層漏斗轉換率均達行業均值以上，整體健康度良好！建議持續監測各層數據，並嘗試 A/B 測試不同 CTA 文案以突破當前天花板。`});
+    }
+  }
+
+  if(reach>0&&cr12<1){
+    insights.push({type:'warning',icon:'📌',text:`觸及→互動轉換率 <b>${cr12.toFixed(2)}%</b> 偏低。建議：① 視覺首圖強化吸睛度，② 文案前兩行直接命中受眾痛點，③ 以問句型標題提升留言率。`});
+  } else if(reach>0&&cr12>=3){
+    insights.push({type:'positive',icon:'🎯',text:`觸及→互動轉換率 <b>${cr12.toFixed(2)}%</b> 表現良好。受眾對內容高度認同，建議利用留言互動蒐集需求，作為下季內容規劃依據。`});
+  }
+
+  if(totalEng>0&&cr23<5){
+    insights.push({type:'warning',icon:'🔗',text:`${isIG?'互動→追蹤':'互動→連結點擊'}轉換率 <b>${cr23.toFixed(2)}%</b> 偏低。建議：${isIG?'在限時動態加強追蹤引導，或提供「追蹤享優先資訊」誘因':'確認每篇貼文均含明確連結 CTA，並在限時動態重新導流至目標頁'}。`});
+  }
+
+  return{tableHtml,insights};
+}
+
+function renderFunnelInsights(){
+  const el=document.getElementById('funnelInsights');
+  if(!el) return;
+  if(!data.length){ el.innerHTML=''; return; }
+  const{tableHtml,insights}=generateFunnelInsights();
+  const unlocked=isInsightsUnlocked();
+  const FREE_COUNT=1;
+  const freeItems=insights.slice(0,FREE_COUNT);
+  const lockedItems=insights.slice(FREE_COUNT);
+
+  const freeHtml=freeItems.map(it=>_insightItemHtml(it,false)).join('');
+  let lockedHtml='';
+  if(lockedItems.length){
+    if(unlocked){
+      lockedHtml=lockedItems.map(it=>_insightItemHtml(it,false)).join('');
+    } else {
+      lockedHtml=`<div class="insight-locked-wrap">${lockedItems.map(it=>_insightItemHtml(it,true)).join('')}</div>${_insightGateHtml(lockedItems.length)}`;
+    }
+  }
+
+  el.innerHTML=`
+<div class="card" style="margin-top:14px;margin-bottom:14px;">
+  <div class="insight-hdr"><div class="insight-hdr-title">漏斗轉換率健診</div><span class="insight-tag insight-tag-ai">自動分析</span></div>
+  <table class="bench-table"><thead><tr><th>漏斗層級</th><th class="nr">你的轉換率</th><th class="nr">行業基準</th><th class="nr">健診結果</th></tr></thead><tbody>${tableHtml}</tbody></table>
+</div>
+${insights.length?`
+<div class="card" style="margin-bottom:14px;">
+  <div class="insight-hdr"><div class="insight-hdr-title">漏斗優化建議</div><span class="insight-tag insight-tag-ai">自動分析</span></div>
+  ${freeHtml}${lockedHtml}
+</div>`:''}
+${_ctaBarHtml('想深入解讀漏斗數據，設計轉換優化策略？')}`;
+}
+
+/* ── EMAIL BAR ── */
+// 替換成你在 formspree.io 申請的 Form ID（格式：https://formspree.io/f/xxxxxxxx）
+const EMAIL_FORMSPREE = 'https://formspree.io/f/YOUR_FORM_ID';
+const EMAIL_BAR_KEY = 'woo_email_bar_hide_until';
+
+(function initEmailBar(){
+  if(readOnly) return; // 客戶分享連結不顯示
+  const hideUntil = parseInt(localStorage.getItem(EMAIL_BAR_KEY)||'0');
+  if(Date.now() < hideUntil) return;
+  setTimeout(() => {
+    const bar = document.getElementById('emailBar');
+    if(bar) bar.classList.add('show');
+  }, 20000);
+})();
+
+function dismissEmailBar(){
+  const bar = document.getElementById('emailBar');
+  if(bar) bar.classList.remove('show');
+  localStorage.setItem(EMAIL_BAR_KEY, Date.now() + 7*24*60*60*1000);
+}
+
+async function submitEmailBar(e){
+  e.preventDefault();
+  const email = document.getElementById('emailBarInput').value.trim();
+  if(!email) return;
+  const btn = document.getElementById('emailBarBtn');
+  btn.disabled = true; btn.textContent = '處理中…';
+  try {
+    const res = await fetch(EMAIL_FORMSPREE, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({ email, source: '社群成效月報儀表板' })
+    });
+    if(res.ok){
+      document.getElementById('emailBarForm').style.display = 'none';
+      document.getElementById('emailBarSuccess').style.display = 'flex';
+      localStorage.setItem(EMAIL_BAR_KEY, Date.now() + 30*24*60*60*1000);
+      setTimeout(dismissEmailBar, 5000);
+    } else {
+      btn.disabled = false; btn.textContent = '免費訂閱';
+      showToast('送出失敗，請稍後再試');
+    }
+  } catch(err){
+    btn.disabled = false; btn.textContent = '免費訂閱';
+    showToast('網路異常，請稍後再試');
+  }
+}
 </script>
 </body>
 </html>
